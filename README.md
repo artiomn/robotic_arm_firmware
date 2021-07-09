@@ -22,3 +22,14 @@ Arduino Uno is used as a control board.
 
 - [PS2X library](https://github.com/madsci1016/Arduino-PS2X).
 - [Servo library](https://www.arduino.cc/reference/en/libraries/servo/).
+- Arduino Uno.
+- [Arduino Sensor Shield v5.0](https://www.amazon.in/Electrobot-Arduino-Sensor-Shield-V5-0/dp/B08D7F3D6Y).
+
+
+## How to use
+
+- Open the sketch in the Arduino Studio.
+- Compile.
+- Upload into the board.
+- Connect arm servos and joystick receiver to the shield.
+- Connect external power and controller power.
