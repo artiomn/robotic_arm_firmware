@@ -67,8 +67,10 @@ boolean Smooth::tickManual()
 */
 
 
-//#define PS2X_DEBUG
-//#define PS2X_COM_DEBUG
+// Uncomment to see debug messages.
+
+#define PS2X_DEBUG
+#define PS2X_COM_DEBUG
 
 #include <PS2X_lib.h>
 
@@ -274,6 +276,8 @@ class JoystickController
 {
 public:
     const unsigned int selection_waiting_ms = 3000;
+    const unsigned int selection_complete_vibration_speed = 190;
+    const unsigned int selection_complete_vibration_ms = 300;
 
 public:
     JoystickController(PS2X &control, unsigned int controller_type, unsigned int device_number) : control_(control), controller_type_(controller_type), device_number_(device_number) {};
@@ -285,9 +289,11 @@ public:
 public:
     typedef void (*ButtonClickHandler)(unsigned int button_code, int value);
     typedef void (*StickHandler)(int x_value, int y_value, boolean clicked);
+    typedef void (*SelectHandler)(unsigned int device_number);
     
 public:
     ButtonClickHandler on_button;
+    SelectHandler on_select;
 
 protected:
     template<typename HandlerType, typename ...HandlerArgs>
@@ -320,7 +326,12 @@ protected:
                     selected_number_ = newly_selected_number_;
                     selection_time_start_ = 0;
                     log_value("Device selection finished. Selected device number = ", selected_number_);
-                    if (selected()) log_value("It's me! I have been selected. Working...");
+                    if (selected())
+                    {
+                        log_value("It's me! I have been selected. Working...");
+                        vibrate(selection_complete_vibration_ms, selection_complete_vibration_speed, selected_number_);
+                        //call_handler(on_select, selected_number_);
+                    }
                 }
             }
 
@@ -381,6 +392,8 @@ protected:
         return false;
     }
 
+    virtual void vibrate(unsigned int ms, byte vibration_speed = 50, unsigned int vibration_count = 1) {}
+
 protected:
     PS2X &control_;
     const unsigned zero_value_ = 128;
@@ -418,15 +431,26 @@ public:
 
     void process() final override
     {
-        int control_vibrate;
-
         // DualShock Controller
         // read controller and set large motor to spin at 'vibrate' speed
-        control_.read_gamepad(false, control_vibrate);
+        boolean enable_vibration = false;
 
-        // This will set the large motor vibrate speed based on
-        // how hard you press the blue (X) button.
-        control_vibrate = control_.Analog(PSAB_BLUE);
+        if (vibration_count_)
+        {
+            unsigned int ms = millis();
+            enable_vibration = ((vibration_start_time_ + vibration_period_) >= ms);
+
+            if (!enable_vibration && ((vibration_start_time_ + 2 * vibration_period_) < ms))
+            {
+                if (--vibration_count_)
+                {
+                    vibration_start_time_ = ms;
+                    enable_vibration = true;
+                }
+            }
+        }
+        
+        control_.read_gamepad(false, enable_vibration ? vibration_speed_ : 0);
 
         check_control_buttons();
 
@@ -439,6 +463,14 @@ public:
         check_fore_buttons();
 
         get_sticks();
+    }
+
+    void vibrate(unsigned int ms, byte vibration_speed, unsigned int vibration_count = 1) override
+    {
+        vibration_start_time_ = millis();
+        vibration_period_ = ms;
+        vibration_speed_ = vibration_speed;
+        vibration_count_ = vibration_count;
     }
 
 public:
@@ -494,6 +526,12 @@ private:
         check_stick<PSS_LX, PSS_LY, PSB_L3>("Left ", on_left_stick);
         check_stick<PSS_RX, PSS_RY, PSB_R3>("Right ", on_right_stick);
     }
+
+private:
+    int vibration_speed_;
+    unsigned int vibration_period_ = 0;
+    unsigned long vibration_start_time_ = 0;
+    unsigned int vibration_count_ = 0;
 };
 
 
@@ -540,7 +578,7 @@ public:
 class Joystick
 {
 public:
-    Joystick(unsigned int device_number = 5) : device_number_(device_number), p_jimpl_(NULL) {}
+    Joystick(unsigned int device_number = 0) : device_number_(device_number), p_jimpl_(NULL) {}
     ~Joystick()
     {
         delete p_jimpl_;
@@ -624,7 +662,7 @@ private:
 };
 
 
-Joystick joystick;
+Joystick joystick(5);
 ArmServos arm;
 
 
@@ -670,9 +708,11 @@ void setup()
             {
                 case PSB_GREEN:
                     arm.open_manip();
+//                    ds_jc->vibrate(100);
                 break;
                 case PSB_BLUE:
                     arm.close_manip();
+//                    ds_jc->vibrate(100);
                 break;
             }
         };
@@ -692,6 +732,7 @@ void setup()
     
                 arm.rotate_shoulder(x_value / 6);
                 arm.lift_shoulder(y_value / 6);
+//                ds_jc->vibrate(100);
             }
         };
     
@@ -710,6 +751,7 @@ void setup()
     
                 arm.rotate_forearm(x_value / 6);
                 arm.lift_forearm(y_value / 6);
+//                ds_jc->vibrate(100);
             }
         };
     };
