@@ -14,6 +14,7 @@ Arduino Uno is used as a control board.
 - Full manipulator control with, using a pad.
 - Manipulator open and close, using triangle and cross buttons, respectively.
 - Possibility to control several devices, using only joystick.
+- Joystick vibration after the device was selected.
 - Smooth arm motions.
 - Easy-extensible C++ code.
 
