@@ -69,8 +69,8 @@ boolean Smooth::tickManual()
 
 // Uncomment to see debug messages.
 
-#define PS2X_DEBUG
-#define PS2X_COM_DEBUG
+// #define PS2X_DEBUG
+// #define PS2X_COM_DEBUG
 
 #include <PS2X_lib.h>
 
@@ -287,9 +287,9 @@ public:
     virtual unsigned int type() { return controller_type_; }
 
 public:
-    typedef void (*ButtonClickHandler)(unsigned int button_code, int value);
-    typedef void (*StickHandler)(int x_value, int y_value, boolean clicked);
-    typedef void (*SelectHandler)(unsigned int device_number);
+    typedef void (*ButtonClickHandler)(JoystickController* controller, unsigned int button_code, int value);
+    typedef void (*StickHandler)(JoystickController* controller, int x_value, int y_value, boolean clicked);
+    typedef void (*SelectHandler)(JoystickController* controller, unsigned int device_number);
     
 public:
     ButtonClickHandler on_button;
@@ -301,7 +301,7 @@ protected:
     {
         if (selected() && handler)
         {
-            handler(handler_args...);
+            handler(this, handler_args...);
         }
     }
 
@@ -465,7 +465,7 @@ public:
         get_sticks();
     }
 
-    void vibrate(unsigned int ms, byte vibration_speed, unsigned int vibration_count = 1) override
+    void vibrate(unsigned int ms, byte vibration_speed = 150, unsigned int vibration_count = 1) override
     {
         vibration_start_time_ = millis();
         vibration_period_ = ms;
@@ -516,7 +516,7 @@ private:
 
         if (selected() && on_stick && (x_value || y_value || clicked))
         {
-            on_stick(x_value, y_value, clicked);
+            on_stick(this, x_value, y_value, clicked);
         }
 
     }
@@ -597,8 +597,6 @@ public:
         {
             case 0:
                 Serial.println("Found Controller, configured successful.");
-                Serial.println("Try out all the buttons, X will vibrate the controller, faster as you press harder.");
-                Serial.println("holding L1 or R1 will print out the analog stick values.");
                 Serial.println("Go to www.billporter.info for updates and to report bugs.");
             break;
             case 1:
@@ -669,7 +667,8 @@ ArmServos arm;
 void setup()
 {
     tone(9, 500, 3000);
-  
+    delay(10);
+
     arm.init_servos();
 //    pinMode(13, OUTPUT);
 //    digitalWrite(13, LOW);
@@ -683,7 +682,7 @@ void setup()
       
         DualShockJC *ds_jc = static_cast<DualShockJC*>(jc);
 
-        ds_jc->on_pad = [&](unsigned int button_code, int value)
+        ds_jc->on_pad = [&](JoystickController */*caller*/, unsigned int button_code, int value)
         {
             switch (button_code)
             {
@@ -702,26 +701,27 @@ void setup()
             }
         };
         
-        ds_jc->on_button = [&](unsigned int button_code, int value)
+        ds_jc->on_button = [&](JoystickController *caller, unsigned int button_code, int value)
         {
             switch (button_code)
             {
                 case PSB_GREEN:
                     arm.open_manip();
-//                    ds_jc->vibrate(100);
+                    static_cast<DualShockJC*>(caller)->vibrate(100);
                 break;
                 case PSB_BLUE:
                     arm.close_manip();
-//                    ds_jc->vibrate(100);
+                    static_cast<DualShockJC*>(caller)->vibrate(100);
                 break;
             }
         };
     
-        ds_jc->on_left_stick = [&](int x_value, int y_value, boolean clicked)
+        ds_jc->on_left_stick = [&](JoystickController *caller, int x_value, int y_value, boolean clicked)
         {
             if (clicked)
             {
                 arm.init_shoulder();
+                static_cast<DualShockJC*>(caller)->vibrate(150);
             }
             else
             {
@@ -732,15 +732,15 @@ void setup()
     
                 arm.rotate_shoulder(x_value / 6);
                 arm.lift_shoulder(y_value / 6);
-//                ds_jc->vibrate(100);
             }
         };
     
-        ds_jc->on_right_stick = [&](int x_value, int y_value, boolean clicked)
+        ds_jc->on_right_stick = [&](JoystickController *caller, int x_value, int y_value, boolean clicked)
         {
             if (clicked)
             {
                 arm.init_forearm();
+                static_cast<DualShockJC*>(caller)->vibrate(150);
             }
             else
             {
@@ -751,7 +751,6 @@ void setup()
     
                 arm.rotate_forearm(x_value / 6);
                 arm.lift_forearm(y_value / 6);
-//                ds_jc->vibrate(100);
             }
         };
     };
