@@ -1,5 +1,9 @@
 #include <Servo.h>
 
+//
+// Artiom N.(cl)2021
+//
+
 /*
 #define SS_SERVO_PERIOD 20		// период работы tick(), мс
 #define SS_DEADTIME 10			// количество тиков до detach
