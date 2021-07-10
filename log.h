@@ -1,6 +1,7 @@
 #ifndef LOG_H
 #define LOG_H
 
+
 void log_value(const char *message, int value)
 {
 #ifdef PS2X_DEBUG
