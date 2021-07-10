@@ -1,4 +1,6 @@
 #include <Servo.h>
+//#include <EEPROM.h>
+
 
 //
 // Artiom N.(cl)2021
@@ -69,8 +71,8 @@ boolean Smooth::tickManual()
 
 // Uncomment to see debug messages.
 
-// #define PS2X_DEBUG
-// #define PS2X_COM_DEBUG
+#define PS2X_DEBUG
+#define PS2X_COM_DEBUG
 
 #include <PS2X_lib.h>
 
@@ -92,6 +94,51 @@ void log_value(const char *message)
 }
 
 
+template<typename Useless>
+class CallHandler;
+
+template<typename R, typename ...Args>
+class CallHandler <R(Args...)>
+{
+public:
+    typedef R(*FunctionSignature)(Args..., void*);
+
+    CallHandler() {}
+    CallHandler(FunctionSignature f, void *data) : f_(f), data_(data) {}
+
+public:
+    R operator()(Args... args)
+    {
+        if (f_) return f_(args..., data_);
+    }
+    
+private:
+    FunctionSignature f_;
+    void *data_;
+};
+
+
+template<typename ...Args>
+class CallHandler <void(Args...)>
+{
+public:
+    typedef void(*FunctionSignature)(Args..., void*);
+
+    CallHandler() {}
+    CallHandler(FunctionSignature f, void *data) : f_(f), data_(data) {}
+
+public:
+    void operator()(Args... args)
+    {
+        if (f_) f_(args..., data_);
+    }
+    
+private:
+    FunctionSignature f_;
+    void *data_;
+};
+
+
 class ServoMotor : public Servo
 {
 public:
@@ -99,17 +146,22 @@ public:
     {
         // Min and Max are pulses in the Servo class.
         Servo::attach(pin, min_angle, max_angle);
+        pin_ = pin;
         min_angle_ = min_angle;
         max_angle_ = max_angle;
     }
 
+
+    
 public:
     unsigned min_angle() const { return min_angle_; }
     unsigned max_angle() const { return max_angle_; }
+    unsigned pin() const { return pin_; }
 
 private:
   int min_angle_;
   int max_angle_;
+  unsigned int pin_;
 };
 
 
@@ -127,94 +179,146 @@ public:
     const unsigned int initial_manip_lift = 90;
     const unsigned int initial_manip_angle = 120;
 
-public:
-    struct ServoData
+    enum ServoMotorType
     {
-        unsigned int min_angle;
-        unsigned int max_angle;
+        smt_shoulder_rotate = 0,
+        smt_shoulder_lift,
+        smt_forearm_rotate,
+        smt_forearm_lift,
+        smt_wrist_lift,
+        smt_manip_control
     };
+
+    static const unsigned int servo_count = smt_manip_control - smt_shoulder_rotate + 1;
+    
+    typedef CallHandler<void(const ServoMotor &servo)> VisitorType;
+    typedef CallHandler<void(ArmServos *caller, const ServoMotor &servo, int angle)> RotateHandler;
 
 public:
     void init_servos(unsigned int shoulder_rotate_pin = 8, unsigned int shoulder_lift_pin = 7,
                      unsigned int forearm_rotate_pin = 6, unsigned int forearm_lift_pin = 5,
                      unsigned int wrist_lift_pin = 4, unsigned int manip_control_pin = 3)
     {
-        init_servo(servo_shoulder_rotate_, shoulder_rotate_pin, initial_shoulder_angle, 0, 250); 
-        init_servo(servo_shoulder_lift_, shoulder_lift_pin, initial_shoulder_lift);
+        init_servo(servo_motors_[smt_shoulder_rotate], shoulder_rotate_pin, initial_shoulder_angle, 0, 250); 
+        init_servo(servo_motors_[smt_shoulder_lift], shoulder_lift_pin, initial_shoulder_lift);
 
-        init_servo(servo_forearm_lift_, forearm_rotate_pin, initial_forearm_lift);
-        init_servo(servo_forearm_rotate_, forearm_lift_pin, initial_forearm_angle, 0, 180);
+        init_servo(servo_motors_[smt_forearm_lift], forearm_rotate_pin, initial_forearm_lift);
+        init_servo(servo_motors_[smt_forearm_rotate], forearm_lift_pin, initial_forearm_angle, 0, 180);
 
-        init_servo(servo_wrist_lift_, wrist_lift_pin, initial_manip_lift);
-        init_servo(servo_manip_control_, manip_control_pin, 10, 0, initial_manip_angle);
+        init_servo(servo_motors_[smt_wrist_lift], wrist_lift_pin, initial_manip_lift);
+        init_servo(servo_motors_[smt_manip_control], manip_control_pin, 10, 0, initial_manip_angle);
     }
     
     void rotate_shoulder(int angle)
     {
-        rot_servo(servo_shoulder_rotate_, angle);
+        rot_servo(servo_motors_[smt_shoulder_rotate], angle);
     }
     
     void lift_shoulder(int angle)
     {
-        rot_servo(servo_shoulder_lift_, angle);
+        rot_servo(servo_motors_[smt_shoulder_lift], angle);
     }
 
     void rotate_forearm(int angle)
     {
-        rot_servo(servo_forearm_rotate_, angle);
+        rot_servo(servo_motors_[smt_forearm_rotate], angle);
     }
 
     void lift_forearm(int angle)
     {
-        rot_servo(servo_forearm_lift_, angle);
+        rot_servo(servo_motors_[smt_forearm_lift], angle);
     }
 
     void lift_manip(int angle)
     {
-        rot_servo(servo_wrist_lift_, angle);
+        rot_servo(servo_motors_[smt_wrist_lift], angle);
     }
 
     void set_manip(int angle)
     {
-        rot_servo(servo_manip_control_, angle);
+        rot_servo(servo_motors_[smt_manip_control], angle);
     }
 
     void open_manip()
     {
-        servo_manip_control_.write(0);
+        write_servo(servo_motors_[smt_manip_control], 0);
     }
     
     void close_manip()
     {
-        servo_manip_control_.write(120);
+        write_servo(servo_motors_[smt_manip_control], 120);
     }
 
-    ServoData shoulder_rotate_stats() const { return servo_stat(servo_shoulder_rotate_); }
-    ServoData shoulder_lift_stats() const { return servo_stat(servo_shoulder_lift_); }
-    ServoData forearm_rotate_stats() const { return servo_stat(servo_forearm_rotate_); }
-    ServoData forearm_lift_stats() const { return servo_stat(servo_forearm_lift_); }
-    ServoData wrist_lift_stats() const { return servo_stat(servo_wrist_lift_); }
-    ServoData manip_control_stats() const { return servo_stat(servo_manip_control_); }
-
+    void init_shoulder(unsigned int shoulder_angle, unsigned int shoulder_lift)
+    {
+        write_servo(servo_motors_[smt_shoulder_rotate], shoulder_angle);
+        write_servo(servo_motors_[smt_shoulder_lift], shoulder_lift);
+    }
+    
     void init_shoulder()
     {
-        servo_shoulder_rotate_.write(initial_shoulder_angle);
-        servo_shoulder_lift_.write(initial_shoulder_lift);
+        init_shoulder(initial_shoulder_angle, initial_shoulder_lift);
+    }
+    
+    void init_forearm(unsigned int forearm_angle, unsigned int forearm_lift)
+    {
+        write_servo(servo_motors_[smt_forearm_rotate], initial_forearm_angle);
+        write_servo(servo_motors_[smt_forearm_lift], initial_forearm_lift);
     }
     
     void init_forearm()
     {
-        servo_forearm_rotate_.write(initial_forearm_angle);
-        servo_forearm_lift_.write(initial_forearm_lift);
+        init_forearm(initial_forearm_angle, initial_forearm_lift);
+    }
+
+    void init_manip(unsigned int manip_angle, unsigned int manip_lift)
+    {
+        write_servo(servo_motors_[smt_wrist_lift], manip_lift);
+        write_servo(servo_motors_[smt_manip_control], manip_angle);
+    }
+
+public:
+    void visit(VisitorType::FunctionSignature visitor, void *data) const
+    {
+        VisitorType f(visitor, data);
+      
+        for (int i = 0; i < sizeof(servo_motors_); ++i)
+        {
+            f(servo_motors_[i]);
+        }
+    }
+    
+    ServoMotor *servo_by_pin(unsigned int pin)
+    {
+        for (int i = 0; i < sizeof(servo_motors_); ++i)
+        {
+            ServoMotor &motor = servo_motors_[i];
+            if (motor.pin() == pin)
+            {
+                return &servo_motors_[i];
+            }
+        }
+        
+        return NULL;
+    }
+
+    void set_rotate_handler(RotateHandler::FunctionSignature handler, void *data)
+    {
+        on_rotate_ = RotateHandler(handler, data);
     }
 
 private:
-    ServoData servo_stat(const ServoMotor &servo)  const { return ServoData {servo.min_angle(), servo.max_angle() }; }
+    void write_servo(ServoMotor &servo, int angle)
+    {
+        servo.write(angle);
+        on_rotate_(this, servo, angle);
+    }
 
+private:
     void init_servo(ServoMotor& servo, int pin, int angle, int min_angle = 0, int max_angle = 180, float speed = 10, float accel = 0.1)
     {
         servo.attach(pin, min_angle, max_angle);
-        servo.write(angle);
+        write_servo(servo, angle);
     }
     
     void rotate_servo(ServoMotor &servo, int angle, int delay_ms = 15, int delay_after_rotation = 50)
@@ -227,11 +331,11 @@ private:
     
         for (int i = 0; i < rot_step; ++i)
         {
-            servo.write(cur_angle + angle_step * i);
+            write_servo(servo, cur_angle + angle_step * i);
             delay(delay_ms);
         }
     
-        servo.write(angle);
+        write_servo(servo, angle);
         delay(delay_after_rotation);
     }
     
@@ -244,7 +348,7 @@ private:
         {
             for (int i = cur_angle; i <= new_angle; ++i)
             {
-                servo.write(i);
+                write_servo(servo, i);
                 delay(1);
             }
         }
@@ -252,19 +356,17 @@ private:
         {
             for (int i = cur_angle; i >= new_angle; --i) 
             {
-                servo.write(i);
+                write_servo(servo, i);
                 delay(1);
             }
         }
+
+        on_rotate_(this, servo, angle);
     }
     
 private:
-    ServoMotor servo_shoulder_rotate_;
-    ServoMotor servo_shoulder_lift_;
-    ServoMotor servo_forearm_lift_;
-    ServoMotor servo_forearm_rotate_;
-    ServoMotor servo_wrist_lift_;
-    ServoMotor servo_manip_control_;
+    ServoMotor servo_motors_[servo_count];
+    RotateHandler on_rotate_;
 };
 
 
@@ -315,7 +417,7 @@ protected:
             if (device_number_)
             {
                 if (!is_selection_in_process())
-                {
+               {
                     log_value("Device selection started. My device number = ", device_number_);
                     newly_selected_number_ = 0;
                     selection_time_start_ = millis();
@@ -425,6 +527,7 @@ class DualShockJC : public JoystickController
 {
 public:
   static const unsigned int controller_type = 1;
+  const unsigned stick_min_value = 2;
 
 public:
     DualShockJC(PS2X &control, unsigned int device_number) : JoystickController(control, controller_type, device_number) {}
@@ -483,7 +586,7 @@ private:
     {
         // ButtonPressed, ButtonReleased, NewButtonState.
         process_button_press<PSB_RED>("Circle just pressed", on_button);
-        process_button_press<PSB_PINK>("Square just released", on_button);
+        process_button_press<PSB_PINK>("Square just pressed", on_button);
         process_button_press<PSB_BLUE>("Cross just pressed", on_button);
         process_button_press<PSB_GREEN>("Triangle just pressed", on_button);
     }
@@ -511,11 +614,10 @@ private:
         int y_value = zero_value_ - control_.Analog(y_const) + 1;
         boolean clicked = control_.Button(btn_const);
 
-        log_value(msg, x_value);
-        log_value(msg, y_value);
-
-        if (selected() && on_stick && (x_value || y_value || clicked))
+        if (selected() && on_stick && ((abs(x_value) > stick_min_value) || (abs(y_value) > stick_min_value) || clicked))
         {
+            log_value(msg, x_value);
+            log_value(msg, y_value);
             on_stick(this, x_value, y_value, clicked);
         }
 
@@ -565,7 +667,7 @@ public:
         process_button<DOWN_STRUM>("DOWN Strum", on_button);
 
         int value = control_.Analog(WHAMMY_BAR) - zero_value_;
-        
+
         if (value || orange_clicked)
         {
             log_value("Wammy Bar Position: ", value);
@@ -584,7 +686,7 @@ public:
         delete p_jimpl_;
     };
 
-    void init_joystick(unsigned int clock_pin = 10, unsigned int command_pin = 13,
+    void init_joystick(unsigned int clock_pin = A0, unsigned int command_pin = 13,
                        unsigned int attention_pin = 11, unsigned int data_pin = 12,
                        unsigned int serial_speed = 57600)
     {
@@ -648,6 +750,7 @@ public:
 public:
     typedef void (*CreateHandler)(JoystickController *joystick_controller);
 
+public:
     CreateHandler on_find_joystick;
 
 private:
@@ -660,8 +763,217 @@ private:
 };
 
 
+class ArmProgram
+{
+public:
+    template<typename ElementType>
+    struct ListElement
+    {
+        ElementType *prev;
+        ElementType *next;
+    };
+
+    struct ProgramAction
+    {
+        ProgramAction(unsigned int pin, int angle, unsigned long interval) : pin_(pin), angle_(angle), interval_(interval) {}
+
+        unsigned int pin_;
+        int angle_;
+        unsigned long interval_;
+    };
+    
+    typedef CallHandler<void(const ProgramAction&)> VisitorType;
+
+private:
+    struct ProgramActionElement
+    {
+        ProgramActionElement(ProgramAction action) : action_(action) {}
+
+        ProgramAction action_;
+        ListElement<ProgramActionElement> list_;
+    };
+
+public:
+    ~ArmProgram()
+    {
+        clear();
+    }
+
+public:
+    boolean started() const { return started_; }
+    boolean recording() const { return recording_; }
+
+public:
+    boolean start_recording(ArmServos &caller)
+    {
+        if (recording_ || started_) return false;
+
+        clear();
+        
+        if (!add_initial_state(caller)) return false;
+        caller_ = &caller;
+        // prev_on_rotate_ = caller.on_rotate;
+        caller.set_rotate_handler(rotate_handler, this);
+        start_time_ = millis();
+        log_value("Program recording was started...");
+        recording_ = true;
+
+        return true;
+    }
+    
+    void stop_recording()
+    {
+        if (!recording_ || started_ || !caller_) return;
+        recording_ = false;
+        log_value("Program recording was stopped...");
+        caller_->set_rotate_handler(NULL, NULL);
+        //prev_on_rotate_ = NULL;
+        //caller_ = NULL;
+    }
+    
+    boolean step()
+    {
+        if (!started_ || recording_) return false;
+
+        log_value("Program step...");
+        if (current_action_->action_.interval_ + start_time_ < millis())
+        {
+            log_value("Program step waiting...");
+            return true;
+        }
+
+        log_value("Program step continued...");
+        ServoMotor* motor = caller_->servo_by_pin(current_action_->action_.pin_);
+        if (!motor)
+        {
+            log_value("Program error: motor was not found...");
+            stop();
+        }
+        motor->write(current_action_->action_.angle_);
+
+        current_action_ = current_action_->list_.next;
+        if (!current_action_)
+        {
+            current_action_ = program_;
+            start_time_ = millis();
+        }
+        
+        return true;
+    }
+    
+    void start(ArmServos &servos)
+    {
+        if (!program_)
+        {
+            log_value("Program is empty.");
+            return;
+        }
+        
+        if (recording_ || started_) return;
+
+        current_action_ = program_;
+        start_time_ = millis();
+        caller_ = &servos;
+        started_ = true;
+        log_value("Program started...");
+    }
+    
+    void stop()
+    {
+        if (recording_ || !started_) return;
+
+        started_ = false;
+        current_action_ = NULL;
+        log_value("Program stopped...");
+    }
+
+public:
+    void visit(VisitorType::FunctionSignature visitor, void *data) const
+    {
+        VisitorType f(visitor, data);
+      
+        for (const ProgramActionElement *pa = program_; pa != NULL; pa = pa->list_.next)
+        {
+            f(pa->action_);
+        }
+    }
+
+public:
+    boolean add_initial_state(const ArmServos &servos)
+    {
+        if (program_) return false;
+
+        servos.visit(servo_visitor, this);
+        
+        return true;
+    }
+    
+public:
+    void clear()
+    {
+        log_value("Clearing program instructions...");
+        ProgramActionElement *p = program_;
+        ProgramActionElement *de;
+
+        while (p)
+        {
+            de = p;
+            p = p->list_.next;
+            delete de;
+        }
+        
+        program_ = last_action_ = NULL;
+        caller_ = NULL;
+    }
+
+    void add_action(const ServoMotor &motor)
+    {
+        if (!program_) program_ = last_action_ = new ProgramActionElement(ProgramAction(motor.pin(), const_cast<ServoMotor&>(motor).read(), millis() - start_time_));
+        else append_new_action(motor.pin(), const_cast<ServoMotor&>(motor).read());
+    }
+
+private:
+    static void rotate_handler(ArmServos *caller, const ServoMotor& motor, int angle, void *obj)
+    {
+        ArmProgram *owner = reinterpret_cast<ArmProgram*>(obj);
+
+        if (!owner->recording() || owner->started()) return;
+        owner->append_new_action(motor.pin(), angle);
+    };
+
+    static void servo_visitor(const ServoMotor &motor, void *obj)
+    {
+        ArmProgram *owner = reinterpret_cast<ArmProgram*>(obj);
+        owner->add_action(motor);
+    }
+
+    void append_new_action(unsigned int pin, int angle)
+    {
+        log_value("Adding program action...");
+        ProgramActionElement *new_action = new ProgramActionElement(ProgramAction(pin, angle, millis() - start_time_));
+        new_action->list_.next = NULL;
+        new_action->list_.prev = last_action_;
+
+        last_action_->list_.next = new_action;
+        last_action_ = new_action;
+    }
+
+private:
+    ProgramActionElement *program_;
+    ProgramActionElement *last_action_;
+    // For the program running.
+    ProgramActionElement *current_action_;
+    ArmServos *caller_;
+    ArmServos::RotateHandler prev_on_rotate_;
+    unsigned long start_time_;
+    boolean started_;
+    boolean recording_;
+};
+
+
 Joystick joystick(5);
 ArmServos arm;
+ArmProgram program;
 
 
 void setup()
@@ -707,11 +1019,24 @@ void setup()
             {
                 case PSB_GREEN:
                     arm.open_manip();
-                    static_cast<DualShockJC*>(caller)->vibrate(100);
+                    static_cast<DualShockJC*>(caller)->vibrate(200);
                 break;
                 case PSB_BLUE:
                     arm.close_manip();
-                    static_cast<DualShockJC*>(caller)->vibrate(100);
+                    static_cast<DualShockJC*>(caller)->vibrate(200);
+                break;
+                case PSB_RED:
+                    // Recording user actions and then save them in the EEPROM.
+                    program.start_recording(arm);
+                break;
+                case PSB_PINK:
+                    // Stop recording without saving or stop user program execution.
+                    program.stop_recording();
+                    program.stop();
+                break;
+                case PSB_L1:
+                case PSB_L2:
+                    program.start(arm);
                 break;
             }
         };
@@ -763,5 +1088,6 @@ void setup()
 void loop()
 {
    joystick.read_joystick();
+   program.step();
    delay(50);
 }
