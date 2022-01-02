@@ -8,15 +8,7 @@
 class ServoMotor : public Servo
 {
 public:
-    void attach(unsigned int pin, unsigned int min_angle, unsigned int max_angle)
-    {
-        // Min and Max are pulses in the Servo class.
-        Servo::attach(pin, min_angle, max_angle);
-        pin_ = pin;
-        min_angle_ = min_angle;
-        max_angle_ = max_angle;
-    }
-
+    void attach(unsigned int pin, unsigned int min_angle, unsigned int max_angle);
 
 public:
     unsigned min_angle() const { return min_angle_; }
@@ -26,7 +18,7 @@ public:
 private:
   int min_angle_;
   int max_angle_;
-  unsigned int pin_;
+  uint8_t pin_;
 };
 
 #endif  // SERVO_MOTOR_H

@@ -9,7 +9,7 @@ class JoystickController
 {
 public:
     const unsigned int selection_waiting_ms = 3000;
-    const unsigned int selection_complete_vibration_speed = 190;
+    const byte selection_complete_vibration_speed = 190;
     const unsigned int selection_complete_vibration_ms = 300;
 
 public:
@@ -18,6 +18,7 @@ public:
 
     virtual void process() = 0;
     virtual unsigned int type() { return controller_type_; }
+    virtual void vibrate(unsigned int ms, byte vibration_speed = 50, byte vibration_count = 1);
 
 public:
     typedef void (*ButtonClickHandler)(JoystickController* controller, unsigned int button_code, int value);
@@ -38,56 +39,8 @@ protected:
         }
     }
 
-    void check_control_buttons()
-    {
-        if (!control_.NewButtonState()) return;
-
-        if (control_.ButtonPressed(PSB_START))
-        {
-            log_value("Start is being held");
-            if (device_number_)
-            {
-                if (!is_selection_in_process())
-               {
-                    log_value("Device selection started. My device number = ", device_number_);
-                    newly_selected_number_ = 0;
-                    selection_time_start_ = millis();
-                    delay(1);
-                }
-                else
-                {
-                    selected_number_ = newly_selected_number_;
-                    selection_time_start_ = 0;
-                    log_value("Device selection finished. Selected device number = ", selected_number_);
-                    if (selected())
-                    {
-                        log_value("It's me! I have been selected. Working...");
-                        vibrate(selection_complete_vibration_ms, selection_complete_vibration_speed, selected_number_);
-                        //call_handler(on_select, selected_number_);
-                    }
-                }
-            }
-
-            call_handler(on_button, PSB_START, control_.Analog(PSB_START));
-        }
-
-        if (control_.ButtonPressed(PSB_SELECT))
-        {
-            log_value("Select is being held.");
-            if (is_selection_in_process())
-            {
-                selection_time_start_ = millis();
-                ++newly_selected_number_;
-                log_value("Newly selected number: ", newly_selected_number_);
-            }
-            call_handler(on_button, PSB_SELECT, control_.Analog(PSB_SELECT));
-        }
-    }
-
-    boolean selected() const
-    {
-        return !device_number_ || (device_number_ == selected_number_);
-    }
+    void check_control_buttons();
+    boolean selected() const;
 
     template<const unsigned int button_id>
     boolean process_button_press(const char *log_message, ButtonClickHandler on_button_handler)
@@ -125,20 +78,14 @@ protected:
         return false;
     }
 
-    virtual void vibrate(unsigned int ms, byte vibration_speed = 50, unsigned int vibration_count = 1) {}
-
 protected:
     PS2X &control_;
     const unsigned zero_value_ = 128;
 
 private:
-    boolean is_selection_in_process() const
-    {
-        unsigned long ms = millis();
-        return (ms > selection_waiting_ms) && ((ms - selection_time_start_) <= selection_waiting_ms);
-    }
+    boolean is_selection_in_process() const;
 
-    template<const unsigned int button_id, const unsigned int analog_button_id>
+    template<const byte button_id, const byte analog_button_id>
     void log_and_call(const char *log_message, ButtonClickHandler on_button_handler)
     {
         log_value(log_message);
@@ -146,10 +93,10 @@ private:
     }
 
 private:
-    const unsigned int controller_type_;
-    const unsigned int device_number_;
-    unsigned int selected_number_;
-    unsigned int newly_selected_number_;
+    const byte controller_type_;
+    const byte device_number_;
+    byte selected_number_;
+    byte newly_selected_number_;
     unsigned long int selection_time_start_ = 0;
 };
 
