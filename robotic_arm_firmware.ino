@@ -3,18 +3,19 @@
 //#include <EEPROM.h>
 
 // Uncomment to see debug messages.
-#define PS2X_DEBUG
-#define PS2X_COM_DEBUG
+//#define PS2X_DEBUG
+//#define PS2X_COM_DEBUG
 
 #include "log.h"
 #include "call_handler.h"
 #include "arm_servos.h"
 #include "joystick.h"
+#include "jc_dualshock.h"
 #include "arm_program.h"
 
 
 //
-// Artiom N.(cl)2021
+// Artiom N.(cl)2022
 //
 
 
@@ -41,7 +42,7 @@ void setup()
       
         DualShockJC *ds_jc = static_cast<DualShockJC*>(jc);
 
-        ds_jc->on_pad = [&](JoystickController */*caller*/, unsigned int button_code, int value)
+        ds_jc->on_pad = [&](JoystickController *, unsigned int button_code, int value)
         {
             switch (button_code)
             {
@@ -66,11 +67,11 @@ void setup()
             {
                 case PSB_GREEN:
                     arm.open_manip();
-                    static_cast<DualShockJC*>(caller)->vibrate(200);
+                    caller->vibrate(200);
                 break;
                 case PSB_BLUE:
                     arm.close_manip();
-                    static_cast<DualShockJC*>(caller)->vibrate(200);
+                    caller->vibrate(200);
                 break;
                 case PSB_RED:
                     // Recording user actions and then save them in the EEPROM.
@@ -137,4 +138,5 @@ void loop()
    joystick.read_joystick();
    program.step();
    delay(50);
+
 }
