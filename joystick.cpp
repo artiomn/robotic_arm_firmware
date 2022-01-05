@@ -1,3 +1,5 @@
+#include <util/atomic.h>
+
 #include "log.h"
 #include "joystick.h"
 #include "jc_dualshock.h"
@@ -10,11 +12,13 @@ Joystick::~Joystick()
 };
 
 
-void Joystick::init_joystick(byte clock_pin, byte command_pin,
-                             byte attention_pin, byte data_pin,
+void Joystick::init_joystick(uint8_t clock_pin, uint8_t command_pin,
+                             uint8_t attention_pin, uint8_t data_pin,
                              unsigned int serial_speed)
 {
     Serial.begin(serial_speed);
+
+    delay(100);
 
     // GamePad(clock, command, attention, data, Pressures?, Rumble?) 
     control_error_ = control_.config_gamepad(clock_pin, command_pin, attention_pin, data_pin, true, true);
@@ -57,7 +61,7 @@ void Joystick::init_joystick(byte clock_pin, byte command_pin,
 }
 
 
-void Joystick::read_joystick()
+void Joystick::read_joystick() volatile
 {
    // You must Read Gamepad to get new values
    // Read GamePad and set vibration values
@@ -69,5 +73,8 @@ void Joystick::read_joystick()
         return;
     }
 
-    p_jimpl_->process();
+    ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+    {
+        p_jimpl_->process();
+    }
 }

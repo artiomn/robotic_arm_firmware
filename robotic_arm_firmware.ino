@@ -1,10 +1,10 @@
+// Uncomment to see debug messages.
+#define PS2X_DEBUG
+#define PS2X_COM_DEBUG
+
 #include <Servo.h>
 #include <PS2X_lib.h>
 //#include <EEPROM.h>
-
-// Uncomment to see debug messages.
-//#define PS2X_DEBUG
-//#define PS2X_COM_DEBUG
 
 #include "log.h"
 #include "call_handler.h"
@@ -26,23 +26,22 @@ ArmProgram program;
 
 void setup()
 {
-    tone(9, 500, 3000);
-    delay(10);
+    //tone(9, 500, 3000);
+    //delay(10);
 
     arm.init_servos();
-//    pinMode(13, OUTPUT);
-//    digitalWrite(13, LOW);
-    joystick.on_find_joystick = [&](JoystickController *jc)
+
+    joystick.on_find_joystick = [&](volatile JoystickController *joystick_controller)
     {
-        if (jc->type() != DualShockJC::controller_type)
+        if (joystick_controller->type() != DualShockJC::controller_type)
         {
             Serial.println("Unsupported joystick type!");
             return;
         }
-      
-        DualShockJC *ds_jc = static_cast<DualShockJC*>(jc);
 
-        ds_jc->on_pad = [&](JoystickController *, unsigned int button_code, int value)
+        volatile DualShockJC &ds_joystick_controller = *static_cast<volatile DualShockJC*>(joystick_controller);
+
+        ds_joystick_controller.on_pad = [&](volatile JoystickController *, uint16_t button_code, int value)
         {
             switch (button_code)
             {
@@ -61,7 +60,7 @@ void setup()
             }
         };
         
-        ds_jc->on_button = [&](JoystickController *caller, unsigned int button_code, int value)
+        ds_joystick_controller.on_button = [&](volatile JoystickController *caller, uint16_t button_code, int value)
         {
             switch (button_code)
             {
@@ -89,12 +88,12 @@ void setup()
             }
         };
     
-        ds_jc->on_left_stick = [&](JoystickController *caller, int x_value, int y_value, boolean clicked)
+        ds_joystick_controller.on_left_stick = [&](volatile JoystickController *caller, int x_value, int y_value, bool clicked)
         {
             if (clicked)
             {
                 arm.init_shoulder();
-                static_cast<DualShockJC*>(caller)->vibrate(150);
+                caller->vibrate(150);
             }
             else
             {
@@ -103,17 +102,17 @@ void setup()
     //            map(x_value, -128, 128, stat_x.min_angle, stat_x.max_angle)
     //            map(y_value, -128, 128, stat_y.min_angle, stat_y.max_angle)
     
-                arm.rotate_shoulder(x_value / 6);
+                arm.rotate_shoulder(-x_value / 6);
                 arm.lift_shoulder(y_value / 6);
             }
         };
     
-        ds_jc->on_right_stick = [&](JoystickController *caller, int x_value, int y_value, boolean clicked)
+        ds_joystick_controller.on_right_stick = [&](volatile JoystickController *caller, int x_value, int y_value, bool clicked)
         {
             if (clicked)
             {
                 arm.init_forearm();
-                static_cast<DualShockJC*>(caller)->vibrate(150);
+                caller->vibrate(150);
             }
             else
             {
@@ -127,7 +126,7 @@ void setup()
             }
         };
     };
-    
+
     joystick.init_joystick();
 
 }

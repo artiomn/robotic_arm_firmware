@@ -18,7 +18,10 @@ public:
   StickHandler on_whammy_bar;
 
 public:
-    void process() final override;
+    void process() volatile final override;
+
+private:
+    void vibrate(unsigned long ms, uint8_t vibration_speed, uint8_t vibration_count) volatile final override {};
 };
 
 #endif  // JC_GUITARHERO_H

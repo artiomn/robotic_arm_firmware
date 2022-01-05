@@ -12,13 +12,14 @@ public:
     template<typename ElementType>
     struct ListElement
     {
-        ElementType *prev;
         ElementType *next;
     };
 
     struct ProgramAction
     {
         ProgramAction(unsigned int pin, int angle, unsigned long interval) : pin_(pin), angle_(angle), interval_(interval) {}
+        ProgramAction(ProgramAction&&) = default;
+        ProgramAction(const ProgramAction&) = default;
 
         unsigned int pin_;
         int angle_;
@@ -30,7 +31,7 @@ public:
 private:
     struct ProgramActionElement
     {
-        ProgramActionElement(ProgramAction action) : action_(action) {}
+        ProgramActionElement(ProgramAction &&action) : action_(action) {}
 
         ProgramAction action_;
         ListElement<ProgramActionElement> list_;

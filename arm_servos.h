@@ -32,9 +32,9 @@ public:
     typedef CallHandler<void(ArmServos *caller, const ServoMotor &servo, int angle)> RotateHandler;
 
 public:
-    void init_servos(unsigned int shoulder_rotate_pin = 6, unsigned int shoulder_lift_pin = 5,
-                     unsigned int forearm_rotate_pin = 4, unsigned int forearm_lift_pin = 3,
-                     unsigned int wrist_lift_pin = 2, unsigned int manip_control_pin = 7);
+    void init_servos(uint8_t shoulder_rotate_pin = 6, uint8_t shoulder_lift_pin = 5,
+                     uint8_t forearm_rotate_pin = 4, uint8_t forearm_lift_pin = 3,
+                     uint8_t wrist_lift_pin = 2, uint8_t manip_control_pin = 7);
 
     void rotate_shoulder(int angle);
     void lift_shoulder(int angle);
@@ -52,16 +52,17 @@ public:
 
 public:
     void visit(VisitorType::FunctionSignature visitor, void *data) const;
-    ServoMotor *servo_by_pin(unsigned int pin);
+    ServoMotor *servo_by_pin(uint8_t pin);
     void set_rotate_handler(RotateHandler::FunctionSignature handler, void *data);
 
 private:
     void write_servo(ServoMotor &servo, int angle);
 
 private:
-    void init_servo(ServoMotor& servo, int pin, int angle, int min_angle = 0, int max_angle = 180, float speed = 10, float accel = 0.1);
-    void rotate_servo(ServoMotor &servo, int angle, int delay_ms = 15, int delay_after_rotation = 50);
-    void rot_servo(ServoMotor &servo, int angle);
+    void init_servo(ServoMotor& servo, uint8_t pin, int angle, int min_angle = 0, int max_angle = 180, float speed = 10, float accel = 0.1);
+    void rotate_servo(ServoMotor &servo, int angle);
+    void rot_servo0(ServoMotor &servo, int angle, int delay_ms = 15, int delay_after_rotation = 50);
+    void rot_servo1(ServoMotor &servo, int angle);
 
 private:
     ServoMotor servo_motors_[servo_count];

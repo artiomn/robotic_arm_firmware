@@ -1,12 +1,14 @@
 #include <Arduino.h>
+#include <util/atomic.h>
 
 #include "log.h"
 #include "arm_servos.h"
+#include "servo_smoother.h"
 
 
-void ArmServos::init_servos(unsigned int shoulder_rotate_pin, unsigned int shoulder_lift_pin,
-                            unsigned int forearm_rotate_pin, unsigned int forearm_lift_pin,
-                            unsigned int wrist_lift_pin, unsigned int manip_control_pin)
+void ArmServos::init_servos(uint8_t shoulder_rotate_pin, uint8_t shoulder_lift_pin,
+                            uint8_t forearm_rotate_pin, uint8_t forearm_lift_pin,
+                            uint8_t wrist_lift_pin, uint8_t manip_control_pin)
 {
     init_servo(servo_motors_[smt_shoulder_rotate], shoulder_rotate_pin, initial_shoulder_angle, 0, 250); 
     init_servo(servo_motors_[smt_shoulder_lift], shoulder_lift_pin, initial_shoulder_lift);
@@ -21,37 +23,37 @@ void ArmServos::init_servos(unsigned int shoulder_rotate_pin, unsigned int shoul
 
 void ArmServos::rotate_shoulder(int angle)
 {
-    rot_servo(servo_motors_[smt_shoulder_rotate], angle);
+    rotate_servo(servo_motors_[smt_shoulder_rotate], angle);
 }
 
 
 void ArmServos::lift_shoulder(int angle)
 {
-    rot_servo(servo_motors_[smt_shoulder_lift], angle);
+    rotate_servo(servo_motors_[smt_shoulder_lift], angle);
 }
 
 
 void ArmServos::rotate_forearm(int angle)
 {
-    rot_servo(servo_motors_[smt_forearm_rotate], angle);
+    rotate_servo(servo_motors_[smt_forearm_rotate], angle);
 }
 
 
 void ArmServos::lift_forearm(int angle)
 {
-    rot_servo(servo_motors_[smt_forearm_lift], angle);
+    rotate_servo(servo_motors_[smt_forearm_lift], angle);
 }
 
 
 void ArmServos::lift_manip(int angle)
 {
-    rot_servo(servo_motors_[smt_wrist_lift], angle);
+    rotate_servo(servo_motors_[smt_wrist_lift], angle);
 }
 
 
 void ArmServos::set_manip(int angle)
 {
-    rot_servo(servo_motors_[smt_manip_control], angle);
+    rotate_servo(servo_motors_[smt_manip_control], angle);
 }
 
 
@@ -104,25 +106,33 @@ void ArmServos::visit(VisitorType::FunctionSignature visitor, void *data) const
 {
     VisitorType f(visitor, data);
 
-    for (int i = 0; i < sizeof(servo_motors_); ++i)
+    ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
     {
-        f(servo_motors_[i]);
+        for (size_t i = 0; i < servo_count; ++i)
+        {
+            f(servo_motors_[i]);
+        }
     }
 }
 
 
-ServoMotor *ArmServos::servo_by_pin(unsigned int pin)
+ServoMotor *ArmServos::servo_by_pin(uint8_t pin)
 {
-    for (int i = 0; i < sizeof(servo_motors_); ++i)
+    ServoMotor *result = nullptr;
+
+    ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
     {
-        ServoMotor &motor = servo_motors_[i];
-        if (motor.pin() == pin)
+        for (size_t i = 0; i < servo_count; ++i)
         {
-            return &servo_motors_[i];
+            if (servo_motors_[i].pin() == pin)
+            {
+                result = &servo_motors_[i];
+                break;
+            }
         }
     }
 
-    return nullptr;
+    return result;
 }
 
 
@@ -139,15 +149,27 @@ void ArmServos::write_servo(ServoMotor &servo, int angle)
 }
 
 
-void ArmServos::init_servo(ServoMotor& servo, int pin, int angle, int min_angle, int max_angle, float speed, float accel)
+void ArmServos::init_servo(ServoMotor& servo, uint8_t pin, int angle, int min_angle, int max_angle, float speed, float accel)
 {
     servo.attach(pin, min_angle, max_angle);
     write_servo(servo, angle);
 }
 
 
-void ArmServos::rotate_servo(ServoMotor &servo, int angle, int delay_ms, int delay_after_rotation)
+void ArmServos::rotate_servo(ServoMotor &servo, int angle)
 {
+    ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+    {
+        ServoSmoother smoother(servo, angle);
+        while (smoother.tick()) delay(1);
+    }
+    //rot_servo1(servo, angle);
+}
+
+
+void ArmServos::rot_servo0(ServoMotor &servo, int angle, int delay_ms, int delay_after_rotation)
+{
+
     const int cur_angle = servo.read();
     const int rot_step = abs(cur_angle - angle);
     double angle_step = 1; // abs(cur_angle - angle) / rot_step;
@@ -165,27 +187,30 @@ void ArmServos::rotate_servo(ServoMotor &servo, int angle, int delay_ms, int del
 }
 
 
-void ArmServos::rot_servo(ServoMotor &servo, int angle)
+void ArmServos::rot_servo1(ServoMotor &servo, int angle)
 {
-    int cur_angle = servo.read();
-    int new_angle = cur_angle + angle;
-
-    if (new_angle > cur_angle)
+    ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
     {
-        for (int i = cur_angle; i <= new_angle; ++i)
+        int cur_angle = servo.read();
+        int new_angle = cur_angle + angle;
+    
+        if (new_angle > cur_angle)
         {
-            write_servo(servo, i);
-            delay(1);
+            for (int i = cur_angle; i <= new_angle; ++i)
+            {
+                write_servo(servo, i);
+                delay(1);
+            }
         }
-    }
-    else
-    {
-        for (int i = cur_angle; i >= new_angle; --i)
+        else
         {
-            write_servo(servo, i);
-            delay(1);
+            for (int i = cur_angle; i >= new_angle; --i)
+            {
+                write_servo(servo, i);
+                delay(1);
+            }
         }
+    
+        on_rotate_(this, servo, angle);
     }
-
-    on_rotate_(this, servo, angle);
 }
