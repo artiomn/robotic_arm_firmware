@@ -1,15 +1,31 @@
 #ifndef LOG_H
 #define LOG_H
 
-#define _LOG_PREFIX_LONG()        \
-    Serial.print(__FILE__);       \
+#include <Arduino.h>
+
+template <typename T, size_t S>
+inline constexpr size_t get_file_name_offset(const T (& str)[S], size_t i = S - 1)
+{
+    return (str[i] == '/' || str[i] == '\\') ? i + 1 : (i > 0 ? get_file_name_offset(str, i - 1) : 0);
+}
+
+template <typename T>
+inline constexpr size_t get_file_name_offset(T (& str)[1])
+{
+    return 0;
+}
+
+
+#define _LOG_PREFIX()        \
+    Serial.print(&__FILE__[get_file_name_offset(__FILE__)]); \
     Serial.print(":");            \
     Serial.print(__LINE__);       \
     Serial.print(": ");
 
-#define _LOG_PREFIX()             \
-    Serial.print(__LINE__);       \
-    Serial.print(": ");
+
+//#define _LOG_PREFIX()        \
+//    Serial.print(__LINE__);       \
+//    Serial.print(": ");
 
 #if defined(PS2X_DEBUG)
 
@@ -43,14 +59,14 @@
 #define LOG_VALUE(...) { }
 #endif // PS2X_DEBUG
 
-static const char _err_prefix[] = "ERROR: ";
+static const char _err_prefix[] = " [ERROR] ";
 
 #define LOG_ERROR(message, value) \
 {                                 \
-    _LOG_PREFIX_LONG();           \
     Serial.print(_err_prefix);    \
+    _LOG_PREFIX();                \
     Serial.print(message);        \
-    Serial.print(value);          \
+    Serial.println(value);        \
 }
 
 #endif  // LOG_H

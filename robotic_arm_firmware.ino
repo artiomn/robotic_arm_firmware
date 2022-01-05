@@ -28,6 +28,16 @@ public:
       tone_pin_(tone_pin), tone_frequency_(tone_frequency)
     {}
 
+    Notifier(uint8_t tone_pin,
+             unsigned long short_duration,
+             unsigned long long_duration,
+             unsigned int tone_frequency = 700) :
+      tone_pin_(tone_pin),
+      short_duration_(short_duration),
+      long_duration_(long_duration),
+      tone_frequency_(tone_frequency)
+    {}
+
 public:
     void tone(unsigned int frequency, unsigned long duration)
     {
@@ -51,6 +61,7 @@ public:
     {
         switch_led(true);
         tone(duration);
+        delay(duration);
         switch_led(false);
     }
 
@@ -63,8 +74,19 @@ public:
         }
     }
 
+    void notify_short(uint8_t count)
+    {
+        notify(count, short_duration_);
+    }
+
+    void notify_long(uint8_t count)
+    {
+        notify(count, long_duration_);
+    }
+
     void stop_board()
     {
+        LOG_ERROR("Stopping the board", 1);
         set_sleep_mode(SLEEP_MODE_PWR_DOWN);
         cli();
         while (true)
@@ -83,6 +105,8 @@ private:
 
 private:
     uint8_t tone_pin_;
+    unsigned long short_duration_ = 180;
+    unsigned long long_duration_ = 350;
     unsigned int tone_frequency_;
 };
 
@@ -95,14 +119,12 @@ ArmProgram program;
 
 void setup()
 {
-    //tone(9, 500, 3000);
-    //delay(10);
-
     auto si_result = arm.init_servos();
     if (si_result != 0)
     {
-        LOG_ERROR("servo init, pin = ", si_result);
-        notifier.notify(1500);
+        LOG_ERROR("Servo initializing, pin = ", si_result);
+        notifier.notify_long(1);
+        notifier.notify_short(1);
         notifier.stop_board();
     }
 
@@ -111,13 +133,13 @@ void setup()
         auto jt = joystick_controller->type();
         if (jt != DualShockJC::controller_type)
         {
-            LOG_ERROR("unsupported joystick type = ", jt);
-            notifier.notify(3, 1500);
-            notifier.notify(2, 500);
+            LOG_ERROR("Unsupported joystick type = ", jt);
+            notifier.notify_long(3);
+            notifier.notify_short(2);
             notifier.stop_board();
         }
 
-        LOG_MESSAGE("Dualshock controller was found");
+        LOG_VALUE("Dualshock controller was found");
 
         volatile DualShockJC &ds_joystick_controller = *static_cast<volatile DualShockJC*>(joystick_controller);
 
@@ -216,30 +238,38 @@ void setup()
         break;
         case Joystick::jerr_controller_not_found:
             LOG_ERROR("No joystick controller found, check wiring, error code =  ", ji_result);
-            notifier.notify(2, 1500);
-            notifier.notify(1, 500);
+            notifier.notify_long(2);
+            notifier.notify_short(1);
+            notifier.stop_board();
         break;
         case Joystick::jerr_controller_not_accept_commands:
             LOG_ERROR("Controller found but not accepting commands, error code =  ", ji_result);
-            notifier.notify(2, 1500);
-            notifier.notify(2, 500);
+            notifier.notify_long(2);
+            notifier.notify_short(2);
+            notifier.stop_board();
         break;
         case Joystick::jerr_controller_refuse_pressures_mode:
+            // Not an error.
             LOG_ERROR("Joystick controller refusing to enter Pressures mode, may not support it, error code = ", ji_result);
-            notifier.notify(2, 1500);
-            notifier.notify(3, 500);
+            // notifier.notify_long(2);
+            // notifier.notify_short(3);
+            // notifier.stop_board();
         break;
         case Joystick::jerr_unknown_controller_type:
             LOG_ERROR("Unknown joystick controller type, error code = ", ji_result);
-            notifier.notify(2, 1500);
-            notifier.notify(4, 500);
+            notifier.notify_long(2);
+            notifier.notify_short(4);
+            notifier.stop_board();
         break;
         default:
             LOG_ERROR("Unknown joystick error = ", ji_result);
-            notifier.notify(3, 1500);
-            notifier.notify(1, 500);
+            notifier.notify_long(3);
+            notifier.notify_short(1);
+            notifier.stop_board();
     }
     // Visit www.billporter.info for troubleshooting tips.");
+    notifier.tone(800, 500);
+    Serial.println("Initialization completed.");
 }
 
 

@@ -18,12 +18,12 @@ int Joystick::init_joystick(uint8_t clock_pin, uint8_t command_pin,
 {
     Serial.begin(serial_speed);
 
-    delay(100);
+    delay(500);
 
     // GamePad(clock, command, attention, data, Pressures?, Rumble?) 
     control_error_ = control_.config_gamepad(clock_pin, command_pin, attention_pin, data_pin, true, true);
 
-    if (control_error_ != 0) return control_error_;
+    if ((control_error_ != jerr_success) && (control_error_ != Joystick::jerr_controller_refuse_pressures_mode)) return control_error_;
 
     switch (control_type_ = control_.readType())
     {
@@ -39,6 +39,8 @@ int Joystick::init_joystick(uint8_t clock_pin, uint8_t command_pin,
     }
 
     if (on_find_joystick && p_jimpl_) on_find_joystick(p_jimpl_);
+
+    return control_error_;
 }
 
 
