@@ -1,6 +1,8 @@
 #ifndef ARM_SERVOS_H
 #define ARM_SERVOS_H
 
+#include <Arduino.h>
+
 #include "log.h"
 #include "servo_motor.h"
 #include "call_handler.h"
@@ -9,12 +11,12 @@
 class ArmServos
 {
 public:
-    const unsigned int initial_shoulder_angle = 60;
+    const unsigned int initial_shoulder_angle = 65;
     const unsigned int initial_shoulder_lift = 90;
     const unsigned int initial_forearm_angle = 90;
     const unsigned int initial_forearm_lift = 50;
     const unsigned int initial_manip_lift = 90;
-    const unsigned int initial_manip_angle = 110;
+    const unsigned int initial_manip_angle = 105;
 
     enum ServoMotorType
     {
@@ -28,13 +30,14 @@ public:
 
     static const unsigned int servo_count = smt_manip_control - smt_shoulder_rotate + 1;
 
+public:
     typedef CallHandler<void(const ServoMotor &servo)> VisitorType;
     typedef CallHandler<void(ArmServos *caller, const ServoMotor &servo, int angle)> RotateHandler;
 
 public:
-    void init_servos(uint8_t shoulder_rotate_pin = 6, uint8_t shoulder_lift_pin = 5,
-                     uint8_t forearm_rotate_pin = 4, uint8_t forearm_lift_pin = 3,
-                     uint8_t wrist_lift_pin = 2, uint8_t manip_control_pin = 7);
+    int init_servos(uint8_t shoulder_rotate_pin = 6, uint8_t shoulder_lift_pin = 5,
+                    uint8_t forearm_rotate_pin = 4, uint8_t forearm_lift_pin = 3,
+                    uint8_t wrist_lift_pin = 2, uint8_t manip_control_pin = 7);
 
     void rotate_shoulder(int angle);
     void lift_shoulder(int angle);
@@ -59,10 +62,9 @@ private:
     void write_servo(ServoMotor &servo, int angle);
 
 private:
-    void init_servo(ServoMotor& servo, uint8_t pin, int angle, int min_angle = 0, int max_angle = 180, float speed = 10, float accel = 0.1);
+    bool init_servo(ServoMotor& servo, uint8_t pin, int angle, int min_angle = 0, int max_angle = 180, float speed = 10, float accel = 0.1);
     void rotate_servo(ServoMotor &servo, int angle);
     void rot_servo0(ServoMotor &servo, int angle, int delay_ms = 15, int delay_after_rotation = 50);
-    void rot_servo1(ServoMotor &servo, int angle);
 
 private:
     ServoMotor servo_motors_[servo_count];

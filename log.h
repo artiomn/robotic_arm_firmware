@@ -1,12 +1,17 @@
 #ifndef LOG_H
 #define LOG_H
 
-#if !defined(PS2X_DEBUG)
+#define _LOG_PREFIX_LONG()        \
+    Serial.print(__FILE__);       \
+    Serial.print(":");            \
+    Serial.print(__LINE__);       \
+    Serial.print(": ");
 
 #define _LOG_PREFIX()             \
     Serial.print(__LINE__);       \
-    Serial.print(":");
+    Serial.print(": ");
 
+#if defined(PS2X_DEBUG)
 
 #define LOG_VALUE_MESSAGE(message, value) \
 {                                 \
@@ -35,7 +40,17 @@
 #define LOG_VALUE(...) _ONE_OR_TWO_ARGS(NARG2(__VA_ARGS__), __VA_ARGS__)
 
 #else
-#define LOG_VALUE(...) { Serial.print("fuck!"); }
+#define LOG_VALUE(...) { }
 #endif // PS2X_DEBUG
+
+static const char _err_prefix[] = "ERROR: ";
+
+#define LOG_ERROR(message, value) \
+{                                 \
+    _LOG_PREFIX_LONG();           \
+    Serial.print(_err_prefix);    \
+    Serial.print(message);        \
+    Serial.print(value);          \
+}
 
 #endif  // LOG_H
