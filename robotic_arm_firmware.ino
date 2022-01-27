@@ -17,6 +17,9 @@
 #include "arm_program.h"
 
 
+void(* reboot) (void) = 0;
+
+
 //
 // Artiom N.(cl)2022
 //
@@ -87,13 +90,13 @@ public:
     void stop_board()
     {
         LOG_ERROR("Stopping the board", 1);
-        set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+        //set_sleep_mode(SLEEP_MODE_PWR_DOWN);
         cli();
         while (true)
         {
-            sleep_enable();
+            //sleep_enable();
             delay(100);
-            sleep_cpu();
+            //sleep_cpu();
         }
     }
 
@@ -111,14 +114,72 @@ private:
 };
 
 
+class SerialCommander
+{
+public:
+    const char cmd_start_symbol = '!';
+    static const int min_command_len = 3;
+    static const int max_command_len = 7;
+
+public:
+    typedef CallHandler<bool(const char* command)> CommandHandler;
+
+public:
+    void read_command()
+    {
+        while (Serial.available())
+        {
+            volatile int c = Serial.read();
+
+            if (command_symbol_index_ >= max_command_len) c = '!';
+
+            if (cmd_start_symbol == c)
+            {
+                if (command_symbol_index_ < min_command_len - 1)
+                {
+                    command_symbol_index_ = 0;
+                    continue;
+                }
+
+                command_[command_symbol_index_] = '\0';
+                bool command_result = on_command_(command_);
+                Serial.print(command_result ? "+" : "-");
+                Serial.println(command_);
+                command_symbol_index_ = 0;
+            }
+            else
+            {
+                command_[command_symbol_index_++] = c;
+            }
+        }
+    };
+
+public:
+    void set_command_handler(CommandHandler::FunctionSignature handler, void *data)
+    {
+        on_command_ = CommandHandler(handler, data);
+    }
+
+private:
+    int command_symbol_index_ = 0;
+    char command_[max_command_len + 1];
+    CommandHandler on_command_;
+};
+
+
 Notifier notifier(12);
 Joystick joystick(5);
 ArmServos arm;
 ArmProgram program;
+SerialCommander serial_commander;
+const uint8_t Reset = 4;
 
 
 void setup()
 {
+    Serial.begin(57600);
+    delay(500);
+
     auto si_result = arm.init_servos();
     if (si_result != 0)
     {
@@ -229,6 +290,75 @@ void setup()
         };
     };
 
+    serial_commander.set_command_handler([&](const char *command, void*) -> bool
+    {
+        enum block_type
+        {
+            bt_shoulder = 's',
+            bt_arm = 'f',
+            bt_manip = 'm'
+        };
+
+        enum action_type
+        {
+            at_lift = 'l',
+            at_rotate = 'r'
+        } a_type;
+
+        if (0 == strcmp(command, "reboot"))
+        {
+            reboot();
+            return true;
+        }
+
+        if (command[0] != at_lift && command[0] != at_rotate)
+        {
+            Serial.println("Unknown action!");
+            return false;
+        }
+
+        a_type = static_cast<action_type>(command[0]);
+
+        switch (command[1])
+        {
+            case bt_shoulder:
+                if (at_lift == a_type)
+                {
+                    arm.lift_shoulder(atoi(&command[2]));
+                }
+                else
+                {
+                    arm.rotate_shoulder(atoi(&command[2]));
+                }
+            break;
+            case bt_arm:
+                if (at_lift == a_type)
+                {
+                    arm.lift_forearm(atoi(&command[2]));
+                }
+                else
+                {
+                    arm.rotate_forearm(atoi(&command[2]));
+                }
+            break;
+            case bt_manip:
+                if (at_lift == a_type)
+                {
+                    arm.lift_manip(atoi(&command[2]));
+                }
+                else
+                {
+                    arm.set_manip(atoi(&command[2]));
+                }
+            break;
+            default:
+                Serial.println("Unknown block!");
+                return false;
+        }
+
+        return true;
+    }, nullptr);
+
     auto ji_result = joystick.init_joystick();
 
     switch (ji_result)
@@ -275,6 +405,7 @@ void setup()
 
 void loop()
 {
+    serial_commander.read_command();
     joystick.read_joystick();
     program.step();
     delay(50);

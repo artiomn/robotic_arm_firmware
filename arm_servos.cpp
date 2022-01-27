@@ -3,7 +3,6 @@
 
 #include "log.h"
 #include "arm_servos.h"
-#include "servo_smoother.h"
 
 
 int ArmServos::init_servos(uint8_t shoulder_rotate_pin, uint8_t shoulder_lift_pin,

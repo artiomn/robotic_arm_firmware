@@ -41,9 +41,9 @@ void ServoMotor::rotate_to(int angle, uint16_t degrees_per_second)
         for (uint16_t i = cur_angle; i != new_angle; i = easer.ease(i))
         {
             write(i);
-            delay(1);
+            /*delay(1);
             Serial.print("A: ");
-            Serial.println(i);
+            Serial.println(i);*/
         }
 
         write(new_angle);

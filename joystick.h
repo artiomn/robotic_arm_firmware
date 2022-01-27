@@ -22,8 +22,7 @@ public:
     ~Joystick();
 
     int init_joystick(uint8_t clock_pin = 11, uint8_t command_pin = 9,
-                      uint8_t attention_pin = 10, uint8_t data_pin = 8,
-                      unsigned int serial_speed = 57600);
+                      uint8_t attention_pin = 10, uint8_t data_pin = 8);
     void read_joystick() volatile;
 
 public:

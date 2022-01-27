@@ -18,6 +18,7 @@ public:
     R operator()(Args... args)
     {
         if (f_) return f_(args..., data_);
+        return R();
     }
 
 private:

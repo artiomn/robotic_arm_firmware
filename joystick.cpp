@@ -13,13 +13,8 @@ Joystick::~Joystick()
 
 
 int Joystick::init_joystick(uint8_t clock_pin, uint8_t command_pin,
-                            uint8_t attention_pin, uint8_t data_pin,
-                            unsigned int serial_speed)
+                            uint8_t attention_pin, uint8_t data_pin)
 {
-    Serial.begin(serial_speed);
-
-    delay(500);
-
     // GamePad(clock, command, attention, data, Pressures?, Rumble?) 
     control_error_ = control_.config_gamepad(clock_pin, command_pin, attention_pin, data_pin, true, true);
 
