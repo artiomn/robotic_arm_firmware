@@ -15,6 +15,8 @@
 #include "joystick.h"
 #include "jc_dualshock.h"
 #include "arm_program.h"
+#include "notifier.h"
+#include "serial_commander.h"
 
 
 void(* reboot) (void) = 0;
@@ -23,149 +25,6 @@ void(* reboot) (void) = 0;
 //
 // Artiom N.(cl)2022
 //
-
-class Notifier
-{
-public:
-    Notifier(uint8_t tone_pin, unsigned int tone_frequency = 700) :
-      tone_pin_(tone_pin), tone_frequency_(tone_frequency)
-    {}
-
-    Notifier(uint8_t tone_pin,
-             unsigned long short_duration,
-             unsigned long long_duration,
-             unsigned int tone_frequency = 700) :
-      tone_pin_(tone_pin),
-      short_duration_(short_duration),
-      long_duration_(long_duration),
-      tone_frequency_(tone_frequency)
-    {}
-
-public:
-    void tone(unsigned int frequency, unsigned long duration)
-    {
-        ::tone(tone_pin_, frequency, duration);
-    }
-
-    void tone(unsigned long duration)
-    {
-        tone(tone_frequency_, duration);
-    }
-
-    void blink(unsigned long blink_time)
-    {
-        // Blinking with built-in led.
-        switch_led(true);
-        delay(blink_time);
-        switch_led(false);
-    }
-
-    void notify(unsigned long duration)
-    {
-        switch_led(true);
-        tone(duration);
-        delay(duration);
-        switch_led(false);
-    }
-
-    void notify(uint8_t count, unsigned long duration)
-    {
-        for (uint8_t i = 0; i < count; ++i)
-        {
-            notify(duration);
-            delay(duration);
-        }
-    }
-
-    void notify_short(uint8_t count)
-    {
-        notify(count, short_duration_);
-    }
-
-    void notify_long(uint8_t count)
-    {
-        notify(count, long_duration_);
-    }
-
-    void stop_board()
-    {
-        LOG_ERROR("Stopping the board", 1);
-        //set_sleep_mode(SLEEP_MODE_PWR_DOWN);
-        cli();
-        while (true)
-        {
-            //sleep_enable();
-            delay(100);
-            //sleep_cpu();
-        }
-    }
-
-private:
-    void switch_led(bool led_on)
-    {
-        digitalWrite(LED_BUILTIN, led_on ? HIGH : LOW);
-    }
-
-private:
-    uint8_t tone_pin_;
-    unsigned long short_duration_ = 180;
-    unsigned long long_duration_ = 350;
-    unsigned int tone_frequency_;
-};
-
-
-class SerialCommander
-{
-public:
-    const char cmd_start_symbol = '!';
-    static const int min_command_len = 3;
-    static const int max_command_len = 7;
-
-public:
-    typedef CallHandler<bool(const char* command)> CommandHandler;
-
-public:
-    void read_command()
-    {
-        while (Serial.available())
-        {
-            volatile int c = Serial.read();
-
-            if (command_symbol_index_ >= max_command_len) c = '!';
-
-            if (cmd_start_symbol == c)
-            {
-                if (command_symbol_index_ < min_command_len - 1)
-                {
-                    command_symbol_index_ = 0;
-                    continue;
-                }
-
-                command_[command_symbol_index_] = '\0';
-                bool command_result = on_command_(command_);
-                Serial.print(command_result ? "+" : "-");
-                Serial.println(command_);
-                command_symbol_index_ = 0;
-            }
-            else
-            {
-                command_[command_symbol_index_++] = c;
-            }
-        }
-    };
-
-public:
-    void set_command_handler(CommandHandler::FunctionSignature handler, void *data)
-    {
-        on_command_ = CommandHandler(handler, data);
-    }
-
-private:
-    int command_symbol_index_ = 0;
-    char command_[max_command_len + 1];
-    CommandHandler on_command_;
-};
-
 
 Notifier notifier(12);
 Joystick joystick(5);
@@ -177,7 +36,7 @@ const uint8_t Reset = 4;
 
 void setup()
 {
-    Serial.begin(57600);
+    Serial.begin(9600);
     delay(500);
 
     auto si_result = arm.init_servos();
@@ -397,7 +256,7 @@ void setup()
             notifier.notify_short(1);
             notifier.stop_board();
     }
-    // Visit www.billporter.info for troubleshooting tips.");
+    // Visit www.billporter.info for troubleshooting tips.
     notifier.tone(800, 500);
     Serial.println("Initialization completed.");
 }
