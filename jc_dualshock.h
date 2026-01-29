@@ -18,19 +18,19 @@ public:
     void vibrate(unsigned long ms, uint8_t vibration_speed = 150, uint8_t vibration_count = 1) volatile final override;
 
 public:
-  ButtonClickHandler on_pad;
-  StickHandler on_left_stick;
-  StickHandler on_right_stick;
+  ButtonClickHandler on_pad_;
+  StickHandler on_left_stick_;
+  StickHandler on_right_stick_;
 
 private:
-    void check_figure_buttons() volatile;
-    void check_fore_buttons() volatile;
-    void check_pad() volatile;
-    void get_sticks() volatile;
-    bool check_vibration_enabled() volatile;
+    void check_figure_buttons();
+    void check_fore_buttons();
+    void check_pad();
+    void get_sticks();
+    bool check_vibration_enabled();
 
     template<unsigned int x_const, unsigned int y_const, uint16_t btn_const>
-    void check_stick(const char *msg, StickHandler on_stick) volatile
+    void check_stick(const char *msg, StickHandler on_stick)
     {
         volatile int x_value = zero_value_ - ps2_control_.Analog(x_const);
         volatile int y_value = zero_value_ - ps2_control_.Analog(y_const) + 1;

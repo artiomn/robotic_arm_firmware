@@ -10,7 +10,7 @@
 //#include <EEPROM.h>
 
 #include "log.h"
-#include "call_handler.h"
+#include "nonstd.h"
 #include "arm_servos.h"
 #include "joystick.h"
 #include "jc_dualshock.h"
@@ -23,7 +23,7 @@ void(* reboot) (void) = 0;
 
 
 //
-// Artiom N.(cl)2022
+// Artiom N.(cl)2026
 //
 
 Notifier notifier(12);
@@ -48,7 +48,7 @@ void setup()
         notifier.stop_board();
     }
 
-    joystick.on_find_joystick = [&](volatile JoystickController *joystick_controller)
+    joystick.on_find_joystick_ = [&](volatile JoystickController *joystick_controller)
     {
         auto jt = joystick_controller->type();
         if (jt != DualShockJC::controller_type)
@@ -63,7 +63,7 @@ void setup()
 
         volatile DualShockJC &ds_joystick_controller = *static_cast<volatile DualShockJC*>(joystick_controller);
 
-        ds_joystick_controller.on_pad = [&](volatile JoystickController *, uint16_t button_code, int value)
+        ds_joystick_controller.on_pad_ = [&](volatile JoystickController *, uint16_t button_code, byte value)
         {
             switch (button_code)
             {
@@ -82,7 +82,7 @@ void setup()
             }
         };
         
-        ds_joystick_controller.on_button = [&](volatile JoystickController *caller, uint16_t button_code, int value)
+        ds_joystick_controller.on_button_ = [&](volatile JoystickController *caller, uint16_t button_code, byte value)
         {
             switch (button_code)
             {
@@ -109,8 +109,8 @@ void setup()
                 break;
             }
         };
-    
-        ds_joystick_controller.on_left_stick = [&](volatile JoystickController *caller, int x_value, int y_value, bool clicked)
+   
+        ds_joystick_controller.on_left_stick_ = [&](volatile JoystickController *caller, int x_value, int y_value, bool clicked)
         {
             if (clicked)
             {
@@ -129,7 +129,7 @@ void setup()
             }
         };
     
-        ds_joystick_controller.on_right_stick = [&](volatile JoystickController *caller, int x_value, int y_value, bool clicked)
+        ds_joystick_controller.on_right_stick_ = [&](volatile JoystickController *caller, int x_value, int y_value, bool clicked)
         {
             if (clicked)
             {
@@ -149,7 +149,7 @@ void setup()
         };
     };
 
-    serial_commander.set_command_handler([&](const char *command, void*) -> bool
+    serial_commander.set_command_handler([&](const char *command) -> bool
     {
         enum block_type
         {

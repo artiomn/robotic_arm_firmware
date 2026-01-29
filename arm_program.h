@@ -3,7 +3,7 @@
 
 #include "log.h"
 #include "arm_servos.h"
-#include "call_handler.h"
+#include "nonstd.h"
 
 
 class ArmProgram
@@ -26,7 +26,7 @@ public:
         unsigned long interval_;
     };
 
-    typedef CallHandler<void(const ProgramAction&)> VisitorType;
+    typedef nonstd::function<void(const ProgramAction&)> VisitorType;
 
 private:
     struct ProgramActionElement
@@ -52,7 +52,7 @@ public:
     void stop();
 
 public:
-    void visit(VisitorType::FunctionSignature visitor, void *data) const;
+    void visit(VisitorType visitor, void *data) const;
 
 public:
     bool add_initial_state(const ArmServos &servos);

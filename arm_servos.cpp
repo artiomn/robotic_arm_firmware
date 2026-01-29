@@ -103,15 +103,13 @@ void ArmServos::init_manip(unsigned int manip_angle, unsigned int manip_lift)
 }
 
 
-void ArmServos::visit(VisitorType::FunctionSignature visitor, void *data) const
+void ArmServos::visit(VisitorType visitor) const
 {
-    VisitorType f(visitor, data);
-
     ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
     {
         for (size_t i = 0; i < servo_count; ++i)
         {
-            f(servo_motors_[i]);
+            visitor(servo_motors_[i]);
         }
     }
 }
@@ -137,9 +135,9 @@ ServoMotor *ArmServos::servo_by_pin(uint8_t pin)
 }
 
 
-void ArmServos::set_rotate_handler(RotateHandler::FunctionSignature handler, void *data)
+void ArmServos::set_rotate_handler(RotateHandler handler)
 {
-    on_rotate_ = RotateHandler(handler, data);
+    on_rotate_ = handler;
 }
 
 

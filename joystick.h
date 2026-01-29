@@ -3,6 +3,7 @@
 
 #include "log.h"
 #include "joystick_controller.h"
+#include "nonstd.h"
 
 
 class Joystick
@@ -26,10 +27,10 @@ public:
     void read_joystick() volatile;
 
 public:
-    typedef void (*CreateHandler)(volatile JoystickController *joystick_controller);
+    typedef nonstd::function<void(volatile JoystickController *joystick_controller)> CreateHandler;
 
 public:
-    CreateHandler on_find_joystick;
+    CreateHandler on_find_joystick_;
 
 private:
     PS2X control_;

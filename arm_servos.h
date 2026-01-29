@@ -5,7 +5,7 @@
 
 #include "log.h"
 #include "servo_motor.h"
-#include "call_handler.h"
+#include "nonstd.h"
 
 
 class ArmServos
@@ -31,8 +31,8 @@ public:
     static const unsigned int servo_count = smt_manip_control - smt_shoulder_rotate + 1;
 
 public:
-    typedef CallHandler<void(const ServoMotor &servo)> VisitorType;
-    typedef CallHandler<void(ArmServos *caller, const ServoMotor &servo, int angle)> RotateHandler;
+    typedef nonstd::function<void(const ServoMotor &servo)> VisitorType;
+    typedef nonstd::function<void(ArmServos *caller, const ServoMotor &servo, int angle)> RotateHandler;
 
 public:
     int init_servos(uint8_t shoulder_rotate_pin = 6, uint8_t shoulder_lift_pin = 5,
@@ -54,9 +54,9 @@ public:
     void init_manip(unsigned int manip_angle, unsigned int manip_lift);
 
 public:
-    void visit(VisitorType::FunctionSignature visitor, void *data) const;
+    void visit(VisitorType visitor) const;
     ServoMotor *servo_by_pin(uint8_t pin);
-    void set_rotate_handler(RotateHandler::FunctionSignature handler, void *data);
+    void set_rotate_handler(RotateHandler handler);
 
 private:
     void write_servo(ServoMotor &servo, int angle);

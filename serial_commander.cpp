@@ -34,7 +34,7 @@ void SerialCommander::read_command()
 };
 
 
-void SerialCommander::set_command_handler(CommandHandler::FunctionSignature handler, void *data)
+void SerialCommander::set_command_handler(CommandHandler handler, void *data)
 {
-    on_command_ = CommandHandler(handler, data);
+    on_command_ = handler; //, data);
 }

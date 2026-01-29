@@ -2,6 +2,8 @@
 #define JOYSTICK_CONTROLLER_H
 
 #include <PS2X_lib.h>
+
+#include "nonstd.h"
 #include "log.h"
 
 
@@ -25,25 +27,16 @@ public:
     virtual void vibrate(unsigned long ms, uint8_t vibration_speed = 50, uint8_t vibration_count = 1) volatile = 0;
 
 public:
-    typedef void (*ButtonClickHandler)(volatile JoystickController* controller, uint16_t button_code, int value);
-    typedef void (*StickHandler)(volatile JoystickController* controller, int x_value, int y_value, boolean clicked);
-    typedef void (*SelectHandler)(volatile JoystickController* controller, unsigned int device_number);
+    typedef nonstd::function<void(volatile JoystickController* controller, uint16_t button_code, byte value)> ButtonClickHandler;
+    typedef nonstd::function<void(volatile JoystickController* controller, int x_value, int y_value, boolean clicked)> StickHandler;
+    typedef nonstd::function<void(volatile JoystickController* controller, unsigned int device_number)> SelectHandler;
 
 public:
-    ButtonClickHandler on_button;
-    SelectHandler on_select;
+    ButtonClickHandler on_button_;
+    SelectHandler on_select_;
 
 protected:
-    template<typename HandlerType, typename ...HandlerArgs>
-    bool call_handler(HandlerType handler, HandlerArgs... handler_args) volatile
-    {
-        if (selected() && handler)
-        {
-            handler(this, handler_args...);
-        }
-    }
-
-    void check_control_buttons() volatile;
+    void check_control_buttons();
     bool selected() const volatile;
 
     template<const uint16_t button_id>
@@ -90,10 +83,10 @@ private:
     bool is_selection_in_process() const volatile;
 
     template<const uint16_t button_id, const uint8_t analog_button_id>
-    void log_and_call(const char *log_message, ButtonClickHandler on_button_handler) volatile
+    void log_and_call(const char *log_message, ButtonClickHandler on_button_handler)
     {
         LOG_VALUE(log_message);
-        call_handler(on_button_handler, button_id, ps2_control_.Analog(analog_button_id));
+        on_button_handler(this, button_id, ps2_control_.Analog(analog_button_id));
     }
 
 private:

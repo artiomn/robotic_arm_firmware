@@ -35,7 +35,7 @@ bool ArmProgram::start_recording(ArmServos &caller)
     if (!add_initial_state(caller)) return false;
     caller_ = &caller;
     // prev_on_rotate_ = caller.on_rotate;
-    caller.set_rotate_handler(rotate_handler, this);
+    caller.set_rotate_handler([this](ArmServos *caller, const ServoMotor& motor, int angle) { rotate_handler(caller, motor, angle, this); });
     start_time_ = millis();
     LOG_VALUE("Program recording was started...");
     recording_ = true;
@@ -49,7 +49,7 @@ void ArmProgram::stop_recording()
     if (!recording_ || started_ || !caller_) return;
     recording_ = false;
     LOG_VALUE("Program recording was stopped...");
-    caller_->set_rotate_handler(NULL, NULL);
+    caller_->set_rotate_handler([](ArmServos *caller, const ServoMotor& motor, int angle) {});
     //prev_on_rotate_ = NULL;
     //caller_ = NULL;
 }
@@ -114,13 +114,11 @@ void ArmProgram::stop()
 }
 
 
-void ArmProgram::visit(VisitorType::FunctionSignature visitor, void *data) const
+void ArmProgram::visit(VisitorType visitor, void *data) const
 {
-    VisitorType f(visitor, data);
-
     for (const ProgramActionElement *pa = program_; pa != NULL; pa = pa->list_.next)
     {
-        f(pa->action_);
+        visitor(pa->action_);
     }
 }
 
@@ -130,7 +128,7 @@ bool ArmProgram::add_initial_state(const ArmServos &servos)
     if (program_) return false;
 
     LOG_VALUE("Saving initial position...");
-    servos.visit(servo_visitor, this);
+    servos.visit([this](const ServoMotor &motor) { servo_visitor(motor, this); } );
     LOG_VALUE("Finished.");
 
     return true;

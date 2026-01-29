@@ -1,7 +1,7 @@
 #ifndef SERIAL_COMMANDER_H
 #define SERIAL_COMMANDER_H
 
-#include "call_handler.h"
+#include "nonstd.h"
 
 
 class SerialCommander
@@ -12,13 +12,13 @@ public:
     static const int max_command_len = 7;
 
 public:
-    typedef CallHandler<bool(const char* command)> CommandHandler;
+    typedef nonstd::function<bool(const char* command)> CommandHandler;
 
 public:
     void read_command();
 
 public:
-    void set_command_handler(CommandHandler::FunctionSignature handler, void *data);
+    void set_command_handler(CommandHandler handler, void *data);
 
 private:
     int command_symbol_index_ = 0;

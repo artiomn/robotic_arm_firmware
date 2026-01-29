@@ -3,7 +3,7 @@
 #include "joystick_controller.h"
 
 
-void JoystickController::check_control_buttons() volatile
+void JoystickController::check_control_buttons()
 {
     if (!ps2_control_.NewButtonState()) return;
 
@@ -33,7 +33,7 @@ void JoystickController::check_control_buttons() volatile
             }
         }
 
-        call_handler(on_button, PSB_START, ps2_control_.Analog(PSB_START));
+        on_button_(this, PSB_START, ps2_control_.Analog(PSB_START));
     }
 
     if (ps2_control_.ButtonPressed(PSB_SELECT))
@@ -47,7 +47,7 @@ void JoystickController::check_control_buttons() volatile
         else if (selected())
         {
             LOG_VALUE("Select is being held.");
-            call_handler(on_button, PSB_SELECT, ps2_control_.Analog(PSB_SELECT));
+            on_button_(this, PSB_SELECT, ps2_control_.Analog(PSB_SELECT));
         }
     }
 }

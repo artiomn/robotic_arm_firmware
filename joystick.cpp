@@ -3,7 +3,6 @@
 #include "log.h"
 #include "joystick.h"
 #include "jc_dualshock.h"
-#include "jc_guitarhero.h"
 
 
 Joystick::~Joystick()
@@ -28,12 +27,12 @@ int Joystick::init_joystick(uint8_t clock_pin, uint8_t command_pin,
         case DualShockJC::controller_type:
             p_jimpl_ = new DualShockJC(control_, device_number_);
         break;
-        case GuitarHeroJC::controller_type:
-            p_jimpl_ = new GuitarHeroJC(control_, device_number_);
-        break;
+        // case GuitarHeroJC::controller_type:
+        //     p_jimpl_ = new GuitarHeroJC(control_, device_number_);
+        // break;
     }
 
-    if (on_find_joystick && p_jimpl_) on_find_joystick(p_jimpl_);
+    if (on_find_joystick_ && p_jimpl_) on_find_joystick_(p_jimpl_);
 
     return control_error_;
 }

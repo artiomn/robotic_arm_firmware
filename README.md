@@ -23,6 +23,7 @@ Arduino Uno is used as a control board.
 
 - [PS2X library](https://github.com/madsci1016/Arduino-PS2X).
 - [Servo library](https://www.arduino.cc/reference/en/libraries/servo/).
+- [nonstd](https://github.com/winterscar/functional-avr) - included.
 - Arduino Uno.
 - [Arduino Sensor Shield v5.0](https://www.amazon.in/Electrobot-Arduino-Sensor-Shield-V5-0/dp/B08D7F3D6Y).
 
