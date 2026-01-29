@@ -102,34 +102,21 @@ ParabolicEaser::ParabolicEaser(uint16_t start_angle, uint16_t end_angle, uint16_
     b_ = mps_4_div_ea_sa_fma;
     // c_ = sa * mps * (-1.0 + (-4.0 * (ea - sa) / (ea + sa))) / (ea - 3.0 * sa);
     c_ = sa * (-mps / ea_sa_fma - mps_4_div_ea_sa_fma * (ea - sa) / (ea + sa));
-
-  Serial.print("S: ");
-  Serial.println(sa);
-  Serial.print("E: ");
-  Serial.println(ea);
-    LOG_VALUE("a = ", a_);
-    LOG_VALUE("b = ", b_);
-    LOG_VALUE("c = ", c_);
 }
 
 
 uint16_t ParabolicEaser::ease(uint16_t cur_angle)
 {
-  float angle_diff = a_ * square(cur_angle) + b_ * cur_angle + c_;    // fma(a, square(result), fma(b_, result, c_));
+    float angle_diff = a_ * square(cur_angle) + b_ * cur_angle + c_;    // fma(a, square(result), fma(b_, result, c_));
 
-  Serial.print("AND: ");
-  Serial.print(angle_diff);
-  Serial.print(", ");
-  if (!angle_diff) angle_diff = 1;
-  else angle_diff = angle_diff > 0 ? ceil(angle_diff) : floor(angle_diff);
+    if (!angle_diff) angle_diff = 1;
+    else angle_diff = angle_diff > 0 ? ceil(angle_diff) : floor(angle_diff);
 
-  Serial.println(angle_diff);
+    angle_diff = (check_direction_) ? abs(angle_diff) : -abs(angle_diff);
 
-  angle_diff = (check_direction_) ? abs(angle_diff) : -abs(angle_diff);
+    long int next_angle = cur_angle + angle_diff;
 
-  long int next_angle = cur_angle + angle_diff;
+    if (next_angle <= 0 || ((check_direction_ && (next_angle >= end_angle_)) || (!check_direction_ && (next_angle <= end_angle_)))) return end_angle_;
 
-  if (next_angle <= 0 || ((check_direction_ && (next_angle >= end_angle_)) || (!check_direction_ && (next_angle <= end_angle_)))) return end_angle_;
-
-  return next_angle;
+    return next_angle;
 }

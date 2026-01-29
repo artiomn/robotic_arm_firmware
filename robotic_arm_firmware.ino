@@ -42,7 +42,7 @@ void setup()
     auto si_result = arm.init_servos();
     if (si_result != 0)
     {
-        LOG_ERROR("Servo initializing, pin = ", si_result);
+        LOG_VALUE(F("Servo initializing, pin = "), si_result);
         notifier.notify_long(1);
         notifier.notify_short(1);
         notifier.stop_board();
@@ -53,13 +53,13 @@ void setup()
         auto jt = joystick_controller->type();
         if (jt != DualShockJC::controller_type)
         {
-            LOG_ERROR("Unsupported joystick type = ", jt);
+            LOG_ERROR(F("Unsupported joystick type = "), jt);
             notifier.notify_long(3);
             notifier.notify_short(2);
             notifier.stop_board();
         }
 
-        LOG_VALUE("Dualshock controller was found");
+        LOG_MESSAGE(F("Dualshock controller was found"));
 
         volatile DualShockJC &ds_joystick_controller = *static_cast<volatile DualShockJC*>(joystick_controller);
 
@@ -172,7 +172,7 @@ void setup()
 
         if (command[0] != at_lift && command[0] != at_rotate)
         {
-            Serial.println("Unknown action!");
+            Serial.println(F("Unknown action!"));
             return false;
         }
 
@@ -211,7 +211,7 @@ void setup()
                 }
             break;
             default:
-                Serial.println("Unknown block!");
+                Serial.println(F("Unknown program block!"));
                 return false;
         }
 
@@ -226,39 +226,39 @@ void setup()
         case Joystick::jerr_success:
         break;
         case Joystick::jerr_controller_not_found:
-            LOG_ERROR("No joystick controller found, check wiring, error code =  ", ji_result);
+            LOG_ERROR(F("No joystick controller found, check wiring, error code =  "), ji_result);
             notifier.notify_long(2);
             notifier.notify_short(1);
             notifier.stop_board();
         break;
         case Joystick::jerr_controller_not_accept_commands:
-            LOG_ERROR("Controller found but not accepting commands, error code =  ", ji_result);
+            LOG_ERROR(F("Controller found but not accepting commands, error code =  "), ji_result);
             notifier.notify_long(2);
             notifier.notify_short(2);
             notifier.stop_board();
         break;
         case Joystick::jerr_controller_refuse_pressures_mode:
             // Not an error.
-            LOG_ERROR("Joystick controller refusing to enter Pressures mode, may not support it, error code = ", ji_result);
+            LOG_ERROR(F("Joystick controller refusing to enter pressures mode, may not support it, error code = "), ji_result);
             // notifier.notify_long(2);
             // notifier.notify_short(3);
             // notifier.stop_board();
         break;
         case Joystick::jerr_unknown_controller_type:
-            LOG_ERROR("Unknown joystick controller type, error code = ", ji_result);
+            LOG_ERROR(F("Unknown joystick controller type, error code = "), ji_result);
             notifier.notify_long(2);
             notifier.notify_short(4);
             notifier.stop_board();
         break;
         default:
-            LOG_ERROR("Unknown joystick error = ", ji_result);
+            LOG_ERROR(F("Unknown joystick error = "), ji_result);
             notifier.notify_long(3);
             notifier.notify_short(1);
             notifier.stop_board();
     }
     // Visit www.billporter.info for troubleshooting tips.
     notifier.tone(800, 500);
-    Serial.println("Initialization completed.");
+    LOG_MESSAGE(F("Initialization completed."));
 }
 
 

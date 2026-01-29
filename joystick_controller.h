@@ -39,8 +39,8 @@ protected:
     void check_control_buttons();
     bool selected() const volatile;
 
-    template<const uint16_t button_id>
-    bool process_button_press(const char *log_message, ButtonClickHandler on_button_handler) volatile
+    template<const uint16_t button_id, typename StringType>
+    bool process_button_press(const StringType *log_message, ButtonClickHandler on_button_handler) volatile
     {
         if (selected() && ps2_control_.ButtonPressed(button_id))
         {
@@ -51,8 +51,8 @@ protected:
         return false;
     }
 
-    template<const uint16_t button_id>
-    bool process_button(const char *log_message, ButtonClickHandler on_button_handler) volatile
+    template<const uint16_t button_id, typename StringType>
+    bool process_button(const StringType *log_message, ButtonClickHandler on_button_handler) volatile
     {
         if (selected() && ps2_control_.Button(button_id))
         {
@@ -63,8 +63,8 @@ protected:
         return false;
     }
 
-    template<const uint16_t button_id, const uint16_t analog_button_id>
-    bool process_analog_button(const char *log_message, ButtonClickHandler on_button_handler) volatile
+    template<const uint16_t button_id, const uint16_t analog_button_id, typename StringType>
+    bool process_analog_button(const StringType *log_message, ButtonClickHandler on_button_handler) volatile
     {
         if (selected() && ps2_control_.Button(button_id))
         {
@@ -82,8 +82,8 @@ protected:
 private:
     bool is_selection_in_process() const volatile;
 
-    template<const uint16_t button_id, const uint8_t analog_button_id>
-    void log_and_call(const char *log_message, ButtonClickHandler on_button_handler)
+    template<const uint16_t button_id, const uint8_t analog_button_id, typename StringType>
+    void log_and_call(const StringType *log_message, ButtonClickHandler on_button_handler)
     {
         LOG_VALUE(log_message);
         on_button_handler(this, button_id, ps2_control_.Analog(analog_button_id));

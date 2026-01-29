@@ -66,7 +66,7 @@ public:
 
     void stop_board()
     {
-        LOG_ERROR("Stopping the board", 1);
+        LOG_ERROR(F("Stopping the board"), 1);
         //set_sleep_mode(SLEEP_MODE_PWR_DOWN);
         cli();
         while (true)

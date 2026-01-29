@@ -29,8 +29,8 @@ private:
     void get_sticks();
     bool check_vibration_enabled();
 
-    template<unsigned int x_const, unsigned int y_const, uint16_t btn_const>
-    void check_stick(const char *msg, StickHandler on_stick)
+    template<unsigned int x_const, unsigned int y_const, uint16_t btn_const, typename StringType>
+    void check_stick(const StringType *msg, StickHandler on_stick)
     {
         volatile int x_value = zero_value_ - ps2_control_.Analog(x_const);
         volatile int y_value = zero_value_ - ps2_control_.Analog(y_const) + 1;
@@ -39,8 +39,8 @@ private:
         if (selected() && on_stick && ((abs(x_value) > stick_min_value) || (abs(y_value) > stick_min_value) || clicked))
         {
             LOG_VALUE(msg);
-            LOG_VALUE("X value: ", x_value);
-            LOG_VALUE("Y value: ", y_value);
+            LOG_VALUE(F("X value: "), x_value);
+            LOG_VALUE(F("Y value: "), y_value);
             on_stick(this, x_value, y_value, clicked);
         }
 

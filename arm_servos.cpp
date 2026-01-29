@@ -161,5 +161,4 @@ void ArmServos::rotate_servo(ServoMotor &servo, int angle)
 {
     servo.rotate_to(angle);
     on_rotate_(this, servo, angle);
-    //rot_servo1(servo, angle);
 }
