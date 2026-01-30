@@ -19,13 +19,17 @@ Arduino Uno is used as a control board.
 - Easy-extensible C++ code.
 
 
+## Hardware
+
+- Arduino Uno.
+- [Arduino Sensor Shield v5.0](https://www.amazon.in/Electrobot-Arduino-Sensor-Shield-V5-0/dp/B08D7F3D6Y).
+
+
 ## Dependencies
 
 - [PS2X library](https://github.com/madsci1016/Arduino-PS2X).
 - [Servo library](https://www.arduino.cc/reference/en/libraries/servo/).
 - [nonstd](https://github.com/winterscar/functional-avr) - included.
-- Arduino Uno.
-- [Arduino Sensor Shield v5.0](https://www.amazon.in/Electrobot-Arduino-Sensor-Shield-V5-0/dp/B08D7F3D6Y).
 
 
 ## How to use
@@ -33,5 +37,19 @@ Arduino Uno is used as a control board.
 - Open the sketch in the Arduino Studio.
 - Compile.
 - Upload into the board.
-- Connect arm servos and joystick receiver to the shield.
-- Connect external power and controller power.
+- Connect arm servos and joystick receiver to the shield:
+
+  * 2 - shoulder rotate servo.
+  * 3 - shoulder lift servo.
+  * 4 - forearm rotate servo.
+  * 5 - forearm lift servo.
+  * 6 - wrist lift servo.
+  * 7 - manipulator open/close servo.
+  * 8 - joystick radio module data pin.
+  * 9 - joystick radio module command pin.
+  * 10 - joystick radio module attention pin.
+  * 11 - joystick radio module clock pin.
+
+- Connect external power and controller power:
+
+  * Remove jumper near shield power input to power servo machines from the external power unit.

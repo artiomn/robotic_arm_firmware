@@ -27,7 +27,7 @@ void(* reboot) (void) = 0;
 //
 
 Notifier notifier(12);
-Joystick joystick(5);
+Joystick joystick(0);
 ArmServos arm;
 ArmProgram program;
 SerialCommander serial_commander;

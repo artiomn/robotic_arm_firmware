@@ -35,9 +35,9 @@ public:
     typedef nonstd::function<void(ArmServos *caller, const ServoMotor &servo, int angle)> RotateHandler;
 
 public:
-    int init_servos(uint8_t shoulder_rotate_pin = 6, uint8_t shoulder_lift_pin = 5,
-                    uint8_t forearm_rotate_pin = 4, uint8_t forearm_lift_pin = 3,
-                    uint8_t wrist_lift_pin = 2, uint8_t manip_control_pin = 7);
+    int init_servos(uint8_t shoulder_rotate_pin = 2, uint8_t shoulder_lift_pin = 3,
+                    uint8_t forearm_rotate_pin = 4, uint8_t forearm_lift_pin = 5,
+                    uint8_t wrist_lift_pin = 6, uint8_t manip_control_pin = 7);
 
     void rotate_shoulder(int angle);
     void lift_shoulder(int angle);
