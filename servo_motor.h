@@ -7,18 +7,21 @@
 #include "log.h"
 
 
-class ParabolicEaser
+class TrapeziumEaser
 {
 public:
-    ParabolicEaser(uint16_t start_angle, uint16_t end_angle, uint16_t max_angle_per_ms);
+    TrapeziumEaser(uint16_t start_angle, uint16_t end_angle, uint16_t max_angle_per_ms);
     uint16_t ease(uint16_t cur_angle);
+
+public:
+    const uint16_t angle_increasing_percent_ = 10;
 
 private:
     uint16_t end_angle_;
-    bool check_direction_;
-    float a_;
-    float b_;
-    float c_;
+    int direction_;
+    uint16_t inc_path_len_;
+    uint16_t max_angle_per_ms_;
+    float m_x_;
 };
 
 
