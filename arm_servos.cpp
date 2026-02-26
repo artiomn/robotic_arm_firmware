@@ -144,7 +144,7 @@ void ArmServos::set_rotate_handler(RotateHandler handler)
 void ArmServos::write_servo(ServoMotor &servo, int angle)
 {
     servo.write(angle);
-    on_rotate_(this, servo, angle);
+    if (on_rotate_) on_rotate_(this, servo, angle);
 }
 
 
@@ -160,5 +160,5 @@ bool ArmServos::init_servo(ServoMotor& servo, uint8_t pin, int angle, int min_an
 void ArmServos::rotate_servo(ServoMotor &servo, int angle)
 {
     servo.rotate_to(angle);
-    on_rotate_(this, servo, angle);
+    if (on_rotate_) on_rotate_(this, servo, angle);
 }
