@@ -1,5 +1,4 @@
-#ifndef ARM_PROGRAM_H
-#define ARM_PROGRAM_H
+#pragma once
 
 #include "log.h"
 #include "arm_servos.h"
@@ -73,5 +72,3 @@ private:
     bool started_;
     bool recording_;
 };
-
-#endif  // ARM_PROGRAM_H

@@ -1,5 +1,4 @@
-#ifndef ARM_SERVOS_H
-#define ARM_SERVOS_H
+#pragma once
 
 #include <Arduino.h>
 
@@ -70,5 +69,3 @@ private:
     ServoMotor servo_motors_[servo_count];
     RotateHandler on_rotate_;
 };
-
-#endif  // ARM_SERVOS_H

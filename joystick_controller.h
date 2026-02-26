@@ -1,5 +1,4 @@
-#ifndef JOYSTICK_CONTROLLER_H
-#define JOYSTICK_CONTROLLER_H
+#pragma once
 
 #include <PS2X_lib.h>
 
@@ -96,5 +95,3 @@ private:
     volatile uint8_t newly_selected_number_ = 0;
     unsigned long int selection_time_start_ = 0;
 };
-
-#endif  // JOYSTICK_CONTROLLER_H

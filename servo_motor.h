@@ -1,5 +1,4 @@
-#ifndef SERVO_MOTOR_H
-#define SERVO_MOTOR_H
+#pragma once
 
 #include <Arduino.h>
 #include <Servo.h>
@@ -41,5 +40,3 @@ private:
   int max_angle_;
   uint8_t pin_;
 };
-
-#endif  // SERVO_MOTOR_H

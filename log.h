@@ -1,5 +1,4 @@
-#ifndef LOG_H
-#define LOG_H
+#pragma once
 
 #include <Arduino.h>
 
@@ -27,8 +26,6 @@ inline constexpr size_t get_file_name_offset(T (& str)[1])
 //    Serial.print(__LINE__);       \
 //    Serial.print(": ");
 
-#if defined(PS2X_DEBUG)
-
 #define LOG_VALUE_MESSAGE(message, value) \
 {                                 \
     _LOG_PREFIX();                \
@@ -55,10 +52,6 @@ inline constexpr size_t get_file_name_offset(T (& str)[1])
 
 #define LOG_VALUE(...) _ONE_OR_TWO_ARGS(NARG2(__VA_ARGS__), __VA_ARGS__)
 
-#else
-#define LOG_VALUE(...) { }
-#endif // PS2X_DEBUG
-
 static const char _err_prefix[] = " [ERROR] ";
 
 #define LOG_ERROR(message, value) \
@@ -68,5 +61,3 @@ static const char _err_prefix[] = " [ERROR] ";
     Serial.print(message);        \
     Serial.println(value);        \
 }
-
-#endif  // LOG_H

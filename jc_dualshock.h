@@ -1,5 +1,4 @@
-#ifndef JC_DUALSHOCK_H
-#define JC_DUALSHOCK_H
+#pragma once
 
 #include "log.h"
 #include "joystick_controller.h"
@@ -52,5 +51,3 @@ private:
     volatile unsigned long vibration_start_time_ = 0;
     volatile int8_t vibration_count_ = 0;
 };
-
-#endif  // JC_DUALSHOCK_H

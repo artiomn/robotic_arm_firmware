@@ -1,5 +1,4 @@
-#ifndef JOYSTICK_H
-#define JOYSTICK_H
+#pragma once
 
 #include "log.h"
 #include "joystick_controller.h"
@@ -40,5 +39,3 @@ private:
 
     const unsigned int device_number_;
 };
-
-#endif  // JOYSTICK_H

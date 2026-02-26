@@ -1,5 +1,4 @@
-#ifndef SERIAL_COMMANDER_H
-#define SERIAL_COMMANDER_H
+#pragma once
 
 #include "nonstd.h"
 
@@ -25,5 +24,3 @@ private:
     char command_[max_command_len + 1];
     CommandHandler on_command_;
 };
-
-#endif

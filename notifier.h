@@ -1,5 +1,4 @@
-#ifndef NOTIFIER_H
-#define NOTIFIER_H
+#pragma once
 
 class Notifier
 {
@@ -89,6 +88,3 @@ private:
     unsigned long long_duration_ = 350;
     unsigned int tone_frequency_;
 };
-
-
-#endif
