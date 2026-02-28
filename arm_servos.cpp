@@ -5,6 +5,12 @@
 #include "arm_servos.h"
 
 
+void def_rot_handler(ArmServos *, const ServoMotor &, int)
+{
+    LOG_MESSAGE(F("Default rotate handler"));
+}
+
+
 int ArmServos::init_servos(uint8_t shoulder_rotate_pin, uint8_t shoulder_lift_pin,
                            uint8_t forearm_rotate_pin, uint8_t forearm_lift_pin,
                            uint8_t wrist_lift_pin, uint8_t manip_control_pin)
@@ -137,14 +143,30 @@ ServoMotor *ArmServos::servo_by_pin(uint8_t pin)
 
 void ArmServos::set_rotate_handler(RotateHandler handler)
 {
-    on_rotate_ = handler;
+    //if (handler == on_rotate_) return;
+
+    if (handler)
+    {
+        on_rotate_ = handler;
+    }
+    else
+    {
+        on_rotate_ = def_rot_handler;
+    }
+}
+
+
+void ArmServos::call_handler(ServoMotor &servo, int angle)
+{
+    LOG_VALUE(F("Rotation handler, angle = "), angle);
+    //on_rotate_(this, servo, angle);
 }
 
 
 void ArmServos::write_servo(ServoMotor &servo, int angle)
 {
     servo.write(angle);
-    if (on_rotate_) on_rotate_(this, servo, angle);
+    call_handler(servo, angle);
 }
 
 
@@ -160,5 +182,5 @@ bool ArmServos::init_servo(ServoMotor& servo, uint8_t pin, int angle, int min_an
 void ArmServos::rotate_servo(ServoMotor &servo, int angle)
 {
     servo.rotate_to(angle);
-    if (on_rotate_) on_rotate_(this, servo, angle);
+    call_handler(servo, angle);
 }

@@ -58,6 +58,7 @@ public:
     void set_rotate_handler(RotateHandler handler);
 
 private:
+    void call_handler(ServoMotor &servo, int angle);
     void write_servo(ServoMotor &servo, int angle);
 
 private:
