@@ -84,8 +84,16 @@ private:
     template<const uint16_t button_id, const uint8_t analog_button_id, typename StringType>
     void log_and_call(const StringType *log_message, ButtonClickHandler on_button_handler)
     {
-        LOG_VALUE(log_message);
-        on_button_handler(this, button_id, ps2_control_.Analog(analog_button_id));
+        LOG_MESSAGE(log_message);
+        if (on_button_handler)
+        {
+            on_button_handler(this, button_id, ps2_control_.Analog(analog_button_id));
+        }
+        else
+        {
+            LOG_MESSAGE(F("Button handler is null."));
+        }
+
     }
 
 private:

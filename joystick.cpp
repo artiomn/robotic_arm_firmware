@@ -32,7 +32,14 @@ int Joystick::init_joystick(uint8_t clock_pin, uint8_t command_pin,
         // break;
     }
 
-    if (on_find_joystick_ && p_jimpl_) on_find_joystick_(p_jimpl_);
+    if (on_find_joystick_)
+    {
+        on_find_joystick_(p_jimpl_);
+    }
+    else
+    {
+        LOG_MESSAGE(F("On find handler is null."));
+    }
 
     return control_error_;
 }

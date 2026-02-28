@@ -37,10 +37,19 @@ private:
 
         if (selected() && on_stick && ((abs(x_value) > stick_min_value) || (abs(y_value) > stick_min_value) || clicked))
         {
-            LOG_VALUE(msg);
+            LOG_MESSAGE(msg);
             LOG_VALUE(F("X value: "), x_value);
             LOG_VALUE(F("Y value: "), y_value);
-            on_stick(this, x_value, y_value, clicked);
+            if (on_stick)
+            {
+                LOG_MESSAGE(F("Call on stick handler..."));
+                on_stick(this, x_value, y_value, clicked);
+                LOG_MESSAGE(F("On stick handler called."));
+            }
+            else
+            {
+                LOG_MESSAGE(F("On stick handler is null."));
+            }
         }
 
     }

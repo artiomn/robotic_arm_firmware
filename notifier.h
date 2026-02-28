@@ -1,10 +1,12 @@
 #pragma once
 
+#include "log.h"
+
 class Notifier
 {
 public:
     Notifier(uint8_t tone_pin, unsigned int tone_frequency = 700) :
-      tone_pin_(tone_pin), tone_frequency_(tone_frequency)
+      tone_pin_(tone_pin), tone_frequency_(tone_frequency), board_stopped_(false)
     {}
 
     Notifier(uint8_t tone_pin,
@@ -18,6 +20,13 @@ public:
     {}
 
 public:
+    void complete_init()
+    {
+        if (board_stopped_) return;
+        this->tone(800, 500);
+        LOG_MESSAGE(F("Initialization completed."));
+    }
+
     void tone(unsigned int frequency, unsigned long duration)
     {
         ::tone(tone_pin_, frequency, duration);
@@ -66,8 +75,10 @@ public:
     void stop_board()
     {
         LOG_ERROR(F("Stopping the board"), 1);
+        board_stopped_ = true;
         //set_sleep_mode(SLEEP_MODE_PWR_DOWN);
-        cli();
+        // Bad: firmware can't be performed!
+        //cli();
         while (true)
         {
             //sleep_enable();
@@ -75,6 +86,8 @@ public:
             //sleep_cpu();
         }
     }
+
+    bool is_init_completed() const { return !board_stopped_; }
 
 private:
     void switch_led(bool led_on)
@@ -87,4 +100,5 @@ private:
     unsigned long short_duration_ = 180;
     unsigned long long_duration_ = 350;
     unsigned int tone_frequency_;
+    bool board_stopped_;
 };

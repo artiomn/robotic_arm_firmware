@@ -1,6 +1,6 @@
 // Uncomment to see debug messages.
-#define PS2X_DEBUG
-#define PS2X_COM_DEBUG
+// #define PS2X_DEBUG
+// #define PS2X_COM_DEBUG
 
 #include <Servo.h>
 #include <PS2X_lib.h>
@@ -38,6 +38,7 @@ void setup()
 {
     Serial.begin(9600);
     delay(500);
+    LOG_MESSAGE(F("Initialization started..."));
 
     auto si_result = arm.init_servos();
     if (si_result != 0)
@@ -50,8 +51,14 @@ void setup()
 
     joystick.on_find_joystick_ = [&](volatile JoystickController *joystick_controller)
     {
+        if (!joystick_controller)
+        {
+            LOG_ERROR(F("Joystick controller is null."), 0);
+            return;
+        }
+
         auto jt = joystick_controller->type();
-        if (jt != DualShockJC::controller_type)
+        if (DualShockJC::controller_type != jt)
         {
             LOG_ERROR(F("Unsupported joystick type = "), jt);
             notifier.notify_long(3);
@@ -65,6 +72,7 @@ void setup()
 
         ds_joystick_controller.on_pad_ = [&](volatile JoystickController *, uint16_t button_code, byte value)
         {
+            LOG_VALUE(F("Pad handler, code = "), button_code);
             switch (button_code)
             {
                 case PSB_PAD_UP:
@@ -84,6 +92,7 @@ void setup()
         
         ds_joystick_controller.on_button_ = [&](volatile JoystickController *caller, uint16_t button_code, byte value)
         {
+            LOG_VALUE(F("Button handler, code = "), button_code);
             switch (button_code)
             {
                 case PSB_GREEN:
@@ -112,18 +121,15 @@ void setup()
    
         ds_joystick_controller.on_left_stick_ = [&](volatile JoystickController *caller, int x_value, int y_value, bool clicked)
         {
+            LOG_MESSAGE(F("Left stick handler."));
             if (clicked)
             {
+                LOG_MESSAGE(F("Left stick clicked."));
                 arm.init_shoulder();
                 caller->vibrate(150);
             }
             else
             {
-    //            ArmServos::ServoData stat_x(arm.shoulder_rotate_stats());
-    //            ArmServos::ServoData stat_y(arm.shoulder_lift_stats());
-    //            map(x_value, -128, 128, stat_x.min_angle, stat_x.max_angle)
-    //            map(y_value, -128, 128, stat_y.min_angle, stat_y.max_angle)
-    
                 arm.rotate_shoulder(-x_value / 6);
                 arm.lift_shoulder(y_value / 8);
             }
@@ -131,18 +137,19 @@ void setup()
     
         ds_joystick_controller.on_right_stick_ = [&](volatile JoystickController *caller, int x_value, int y_value, bool clicked)
         {
+            LOG_MESSAGE(F("Right stick handler."));
             if (clicked)
             {
+                LOG_MESSAGE(F("Right stick clicked."));
                 arm.init_forearm();
                 caller->vibrate(150);
             }
             else
             {
-    //            ArmServos::ServoData stat_x(arm.forearm_rotate_stats());
-    //            ArmServos::ServoData stat_y(arm.forearm_lift_stats());
-    //            map(x_value, -128, 128, stat_x.min_angle, stat_x.max_angle)
-    //            map(y_value, -128, 128, stat_y.min_angle, stat_y.max_angle)
-    
+               //ArmServos::ServoData stat_x(arm.forearm_rotate_stats());
+               //ArmServos::ServoData stat_y(arm.forearm_lift_stats());
+               //map(x_value, -128, 128, stat_x.min_angle, stat_x.max_angle)
+               //map(y_value, -128, 128, stat_y.min_angle, stat_y.max_angle)
                 arm.rotate_forearm(x_value / 6);
                 arm.lift_forearm(y_value / 6);
             }
@@ -240,8 +247,8 @@ void setup()
         case Joystick::jerr_controller_refuse_pressures_mode:
             // Not an error.
             LOG_ERROR(F("Joystick controller refusing to enter pressures mode, may not support it, error code = "), ji_result);
-            // notifier.notify_long(2);
-            // notifier.notify_short(3);
+            notifier.notify_long(2);
+            notifier.notify_short(3);
             // notifier.stop_board();
         break;
         case Joystick::jerr_unknown_controller_type:
@@ -256,17 +263,18 @@ void setup()
             notifier.notify_short(1);
             notifier.stop_board();
     }
-    // Visit www.billporter.info for troubleshooting tips.
-    notifier.tone(800, 500);
-    LOG_MESSAGE(F("Initialization completed."));
+
+    notifier.complete_init();
 }
 
 
 void loop()
 {
-    serial_commander.read_command();
-    joystick.read_joystick();
-    program.step();
+    if (notifier.is_init_completed())
+    {
+        serial_commander.read_command();
+        joystick.read_joystick();
+        program.step();
+    }
     delay(50);
-
 }
