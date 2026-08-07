@@ -74,7 +74,7 @@ public:
 
     void stop_board()
     {
-        LOG_ERROR(F("Stopping the board"), 1);
+        LOG_ERROR(F("Stopping the board = "), 1);
         board_stopped_ = true;
         //set_sleep_mode(SLEEP_MODE_PWR_DOWN);
         // Bad: firmware can't be performed!

@@ -11,10 +11,13 @@ public:
   const unsigned stick_min_value = 2;
 
 public:
-    DualShockJC(PS2X &control, unsigned int device_number) : JoystickController(control, controller_type, device_number) {}
+    DualShockJC(PS2X &control, unsigned int device_number) : JoystickController(control, controller_type, device_number)
+    {
+        init();
+    }
 
-    void process() volatile final override;
-    void vibrate(unsigned long ms, uint8_t vibration_speed = 150, uint8_t vibration_count = 1) volatile final override;
+    void process() final override;
+    void vibrate(unsigned long ms, uint8_t vibration_speed = 150, uint8_t vibration_count = 1) final override;
 
 public:
   ButtonClickHandler on_pad_;
@@ -31,9 +34,9 @@ private:
     template<unsigned int x_const, unsigned int y_const, uint16_t btn_const, typename StringType>
     void check_stick(const StringType *msg, StickHandler on_stick)
     {
-        volatile int x_value = zero_value_ - ps2_control_.Analog(x_const);
-        volatile int y_value = zero_value_ - ps2_control_.Analog(y_const) + 1;
-        volatile bool clicked = ps2_control_.Button(btn_const);
+        int x_value = zero_value_ - ps2_control_.Analog(x_const);
+        int y_value = zero_value_ - ps2_control_.Analog(y_const) + 1;
+        bool clicked = ps2_control_.Button(btn_const);
 
         if (selected() && on_stick && ((abs(x_value) > stick_min_value) || (abs(y_value) > stick_min_value) || clicked))
         {
@@ -55,8 +58,8 @@ private:
     }
 
 private:
-    volatile uint8_t vibration_speed_;
-    volatile unsigned long vibration_period_ = 0;
-    volatile unsigned long vibration_start_time_ = 0;
-    volatile int8_t vibration_count_ = 0;
+    uint8_t vibration_speed_;
+    unsigned long vibration_period_ = 0;
+    unsigned long vibration_start_time_ = 0;
+    int8_t vibration_count_ = 0;
 };

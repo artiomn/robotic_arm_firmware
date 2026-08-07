@@ -2,27 +2,10 @@
 
 #include <Arduino.h>
 #include <Servo.h>
-
 #include "log.h"
 
 
-class TrapeziumEaser
-{
-public:
-    TrapeziumEaser(uint16_t start_angle, uint16_t end_angle, uint16_t max_angle_per_ms);
-    uint16_t ease(uint16_t cur_angle);
-
-public:
-    const uint16_t angle_increasing_percent_ = 10;
-
-private:
-    uint16_t end_angle_;
-    int direction_;
-    uint16_t inc_path_len_;
-    uint16_t max_angle_per_ms_;
-    float m_x_;
-};
-
+const int incorrect_angle = -255;
 
 class ServoMotor : public Servo
 {
@@ -33,10 +16,14 @@ public:
     unsigned min_angle() const { return min_angle_; }
     unsigned max_angle() const { return max_angle_; }
     unsigned pin() const { return pin_; }
-    void rotate_to(int angle, uint16_t degrees_per_second = 10);
+    void rotate_to(int angle);
+    void rotate();
 
 private:
   int min_angle_;
   int max_angle_;
+  bool rotation_ = false;
+  int dest_angle_ = incorrect_angle;
   uint8_t pin_;
+  int dps_ = 1;
 };

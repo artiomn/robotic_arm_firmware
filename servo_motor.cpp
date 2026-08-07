@@ -18,53 +18,29 @@ bool ServoMotor::attach(unsigned int pin, unsigned int min_angle, unsigned int m
 }
 
 
-void ServoMotor::rotate_to(int angle, uint16_t degrees_per_second)
+void ServoMotor::rotate_to(int angle)
 {
-    ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
-    {
-        const int cur_angle = read();
-        const int new_angle = constrain(cur_angle + angle, min_angle_, max_angle_);
-
-        if (new_angle == cur_angle) return;
-
-        TrapeziumEaser easer(cur_angle, new_angle, 270);
-
-        for (uint16_t i = cur_angle; i != new_angle; i = easer.ease(i))
-        {
-            write(i);
-            delay(1);
-        }
-
-        write(new_angle);
-    }
+    dest_angle_ = angle;
+    rotation_ = true;
 }
 
 
-TrapeziumEaser::TrapeziumEaser(uint16_t start_angle, uint16_t end_angle, uint16_t max_angle_per_ms) :
-  end_angle_(end_angle),
-  direction_(start_angle < end_angle ? 1 : -1),
-  max_angle_per_ms_(max_angle_per_ms)
+void ServoMotor::rotate()
 {
-    // Common easer function: next_angle = easer(start_angle, end_angle)(cur_angle)
-    // Common easer equation (angle per second from time, where "time" is a current angle): next_angle = cur_angle + delta
-    // Easer call returns delta.
+    if (!rotation_ || (dest_angle_ == incorrect_angle)) return;
 
-    float path_len = abs(end_angle - start_angle);
-    inc_path_len_ = angle_increasing_percent_ * (path_len / 100);
+    const auto cur_angle = read();
 
-    // y = m * x;
-    m_x_ = max_angle_per_ms_ / inc_path_len_;
-}
-
-
-uint16_t TrapeziumEaser::ease(uint16_t cur_angle)
-{
-    uint16_t delta = max_angle_per_ms_;
-
-    if (((end_angle_ - inc_path_len_)  < cur_angle) && (cur_angle < inc_path_len_))
+    if (dest_angle_ < cur_angle)
     {
-        delta = m_x_ * cur_angle;
+        const auto new_angle = cur_angle + dps_;
+        write(min(new_angle, dest_angle_));
+        rotation_ = new_angle > dest_angle_;
     }
-
-    return cur_angle + direction_ * delta;
+    else if (dest_angle_ > cur_angle)
+    {
+        const auto new_angle = cur_angle - dps_;
+        write(max(new_angle, dest_angle_));
+        rotation_ = new_angle < dest_angle_;
+    }
 }

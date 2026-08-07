@@ -4,7 +4,7 @@
 #include "arm_program.h"
 
 
-void rotate_handler(ArmServos *caller, const ServoMotor& motor, int angle, void *obj)
+void rotate_handler(ArmServos *caller, const ArmServos::ServoMotorType motor, int angle, void *obj)
 {
     ArmProgram *owner = reinterpret_cast<ArmProgram*>(obj);
 
@@ -13,7 +13,7 @@ void rotate_handler(ArmServos *caller, const ServoMotor& motor, int angle, void 
 };
 
 
-void servo_visitor(const ServoMotor &motor, void *obj)
+void servo_visitor(const ArmServos::ServoMotorType motor, void *obj)
 {
     ArmProgram *owner = reinterpret_cast<ArmProgram*>(obj);
     owner->add_action(motor);
@@ -35,7 +35,10 @@ bool ArmProgram::start_recording(ArmServos &caller)
     if (!add_initial_state(caller)) return false;
     caller_ = &caller;
     // prev_on_rotate_ = caller.on_rotate;
-    caller.set_rotate_handler([this](ArmServos *caller, const ServoMotor& motor, int angle) { rotate_handler(caller, motor, angle, this); });
+    caller.set_rotate_handler([this](ArmServos *caller, const ArmServos::ServoMotorType motor, int angle)
+    {
+        rotate_handler(caller, motor, angle, this);
+    });
     start_time_ = millis();
     LOG_VALUE(F("Program recording was started..."));
     recording_ = true;
@@ -49,7 +52,7 @@ void ArmProgram::stop_recording()
     if (!recording_ || started_ || !caller_) return;
     recording_ = false;
     LOG_VALUE(F("Program recording was stopped..."));
-    caller_->set_rotate_handler([](ArmServos *caller, const ServoMotor& motor, int angle) {});
+    caller_->set_rotate_handler([](ArmServos *caller, const ArmServos::ServoMotorType motor, int angle) {});
     //prev_on_rotate_ = NULL;
     //caller_ = NULL;
 }
@@ -128,7 +131,7 @@ bool ArmProgram::add_initial_state(const ArmServos &servos)
     if (program_) return false;
 
     LOG_VALUE(F("Saving initial position..."));
-    servos.visit([this](const ServoMotor &motor) { servo_visitor(motor, this); } );
+    servos.visit([this](const ArmServos::ServoMotorType motor) { servo_visitor(motor, this); } );
     LOG_VALUE(F("Finished."));
 
     return true;
@@ -153,25 +156,26 @@ void ArmProgram::clear()
 }
 
 
-void ArmProgram::add_action(const ServoMotor &motor)
+void ArmProgram::add_action(const ArmServos::ServoMotorType motor)
 {
-    add_action(motor, const_cast<ServoMotor&>(motor).read());
+    // TODO: read angle.
+    // add_action(motor, const_cast<ServoMotorType>(motor).read());
 }
 
 
-void ArmProgram::add_action(const ServoMotor &motor, int angle)
+void ArmProgram::add_action(const ArmServos::ServoMotorType motor, int angle)
 {
-    auto pin = motor.pin();
-    LOG_VALUE(F("Adding action, pin: "), pin);
-    LOG_VALUE(F("Angle: "), angle);
+    // auto pin = motor.pin();
+    // LOG_VALUE(F("Adding action, pin: "), pin);
+    // LOG_VALUE(F("Angle: "), angle);
 
-    ProgramActionElement *new_action = new ProgramActionElement(ProgramAction(pin, angle, millis() - start_time_));
-    new_action->list_.next = NULL;
+    // ProgramActionElement *new_action = new ProgramActionElement(ProgramAction(pin, angle, millis() - start_time_));
+    // new_action->list_.next = NULL;
 
-    if (!program_) program_ = last_action_ = new_action;
-    else
-    {
-        last_action_->list_.next = new_action;
-        last_action_ = new_action;
-    }
+    // if (!program_) program_ = last_action_ = new_action;
+    // else
+    // {
+    //     last_action_->list_.next = new_action;
+    //     last_action_ = new_action;
+    // }
 }

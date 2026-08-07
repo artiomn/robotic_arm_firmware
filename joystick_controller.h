@@ -16,19 +16,24 @@ public:
 public:
     JoystickController(PS2X &ps2_control, unsigned int controller_type, unsigned int device_number) : ps2_control_(ps2_control), controller_type_(controller_type), device_number_(device_number)
     {
+    };
+
+    void init()
+    {
         // Need to disable side effects, such a vibration after rebooting.
         ps2_control_.read_gamepad(false, 0);
-    };
+    }
+
     virtual ~JoystickController() = default;
 
-    virtual void process() volatile = 0;
+    virtual void process() = 0;
     virtual unsigned int type() const { return controller_type_; }
-    virtual void vibrate(unsigned long ms, uint8_t vibration_speed = 50, uint8_t vibration_count = 1) volatile = 0;
+    virtual void vibrate(unsigned long ms, uint8_t vibration_speed = 50, uint8_t vibration_count = 1) = 0;
 
 public:
-    typedef nonstd::function<void(volatile JoystickController* controller, uint16_t button_code, byte value)> ButtonClickHandler;
-    typedef nonstd::function<void(volatile JoystickController* controller, int x_value, int y_value, boolean clicked)> StickHandler;
-    typedef nonstd::function<void(volatile JoystickController* controller, unsigned int device_number)> SelectHandler;
+    typedef nonstd::function<void(JoystickController* controller, uint16_t button_code, byte value)> ButtonClickHandler;
+    typedef nonstd::function<void(JoystickController* controller, int x_value, int y_value, boolean clicked)> StickHandler;
+    typedef nonstd::function<void(JoystickController* controller, unsigned int device_number)> SelectHandler;
 
 public:
     ButtonClickHandler on_button_;
@@ -36,10 +41,10 @@ public:
 
 protected:
     void check_control_buttons();
-    bool selected() const volatile;
+    bool selected() const;
 
     template<const uint16_t button_id, typename StringType>
-    bool process_button_press(const StringType *log_message, ButtonClickHandler on_button_handler) volatile
+    bool process_button_press(const StringType *log_message, ButtonClickHandler on_button_handler)
     {
         if (selected() && ps2_control_.ButtonPressed(button_id))
         {
@@ -51,7 +56,7 @@ protected:
     }
 
     template<const uint16_t button_id, typename StringType>
-    bool process_button(const StringType *log_message, ButtonClickHandler on_button_handler) volatile
+    bool process_button(const StringType *log_message, ButtonClickHandler on_button_handler)
     {
         if (selected() && ps2_control_.Button(button_id))
         {
@@ -63,7 +68,7 @@ protected:
     }
 
     template<const uint16_t button_id, const uint16_t analog_button_id, typename StringType>
-    bool process_analog_button(const StringType *log_message, ButtonClickHandler on_button_handler) volatile
+    bool process_analog_button(const StringType *log_message, ButtonClickHandler on_button_handler)
     {
         if (selected() && ps2_control_.Button(button_id))
         {
@@ -79,7 +84,7 @@ protected:
     const unsigned zero_value_ = 128;
 
 private:
-    bool is_selection_in_process() const volatile;
+    bool is_selection_in_process() const;
 
     template<const uint16_t button_id, const uint8_t analog_button_id, typename StringType>
     void log_and_call(const StringType *log_message, ButtonClickHandler on_button_handler)
@@ -99,7 +104,7 @@ private:
 private:
     const uint8_t controller_type_;
     const uint8_t device_number_;
-    volatile uint8_t selected_number_ = 0;
-    volatile uint8_t newly_selected_number_ = 0;
+    uint8_t selected_number_ = 0;
+    uint8_t newly_selected_number_ = 0;
     unsigned long int selection_time_start_ = 0;
 };

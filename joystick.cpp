@@ -17,6 +17,8 @@ int Joystick::init_joystick(uint8_t clock_pin, uint8_t command_pin,
     // GamePad(clock, command, attention, data, Pressures?, Rumble?) 
     control_error_ = control_.config_gamepad(clock_pin, command_pin, attention_pin, data_pin, true, true);
 
+    LOG_VALUE(F("Controller initialization error: "), control_error_);
+
     if ((control_error_ != jerr_success) && (control_error_ != Joystick::jerr_controller_refuse_pressures_mode)) return control_error_;
 
     switch (control_type_ = control_.readType())
@@ -25,6 +27,8 @@ int Joystick::init_joystick(uint8_t clock_pin, uint8_t command_pin,
             return jerr_unknown_controller_type;
         break;
         case DualShockJC::controller_type:
+        // Wireless controller.
+        case 3:
             p_jimpl_ = new DualShockJC(control_, device_number_);
         break;
         // case GuitarHeroJC::controller_type:
@@ -32,9 +36,11 @@ int Joystick::init_joystick(uint8_t clock_pin, uint8_t command_pin,
         // break;
     }
 
+    if (!p_jimpl_) return jerr_controller_create_error;
+
     if (on_find_joystick_)
     {
-        on_find_joystick_(p_jimpl_);
+       on_find_joystick_(p_jimpl_);
     }
     else
     {
@@ -45,7 +51,7 @@ int Joystick::init_joystick(uint8_t clock_pin, uint8_t command_pin,
 }
 
 
-void Joystick::read_joystick() volatile
+void Joystick::read_joystick()
 {
    // You must Read Gamepad to get new values
    // Read GamePad and set vibration values

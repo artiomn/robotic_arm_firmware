@@ -30,8 +30,8 @@ public:
     static const unsigned int servo_count = smt_manip_control - smt_shoulder_rotate + 1;
 
 public:
-    typedef nonstd::function<void(const ServoMotor &servo)> VisitorType;
-    typedef nonstd::function<void(ArmServos *caller, const ServoMotor &servo, int angle)> RotateHandler;
+    typedef nonstd::function<void(const ServoMotorType servo)> VisitorType;
+    typedef nonstd::function<void(ArmServos *caller, const ServoMotorType servo, int angle)> RotateHandler;
 
 public:
     int init_servos(uint8_t shoulder_rotate_pin = 2, uint8_t shoulder_lift_pin = 3,
@@ -53,18 +53,19 @@ public:
     void init_manip(unsigned int manip_angle, unsigned int manip_lift);
 
 public:
+    void rotate();
     void visit(VisitorType visitor) const;
     ServoMotor *servo_by_pin(uint8_t pin);
     void set_rotate_handler(RotateHandler handler);
 
 private:
-    void call_handler(ServoMotor &servo, int angle);
-    void write_servo(ServoMotor &servo, int angle);
+    void call_handler(const ServoMotorType servo, int angle);
+    void write_servo(const ServoMotorType servo, int angle);
 
 private:
-    bool init_servo(ServoMotor& servo, uint8_t pin, int angle, int min_angle = 0, int max_angle = 180, float speed = 10, float accel = 0.1);
-    void rotate_servo(ServoMotor &servo, int angle);
-    void rot_servo0(ServoMotor &servo, int angle, int delay_ms = 15, int delay_after_rotation = 50);
+    bool init_servo(const ServoMotorType servo, uint8_t pin, int angle, int min_angle = 0, int max_angle = 180, float speed = 10, float accel = 0.1);
+    void rotate_servo(const ServoMotorType servo, int angle);
+    void rot_servo0(const ServoMotorType servo, int angle, int delay_ms = 15, int delay_after_rotation = 50);
 
 private:
     ServoMotor servo_motors_[servo_count];

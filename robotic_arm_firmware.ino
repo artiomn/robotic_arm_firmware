@@ -2,7 +2,9 @@
 // #define PS2X_DEBUG
 // #define PS2X_COM_DEBUG
 
-#include <Servo.h>
+#include <Arduino.h>
+#include <ServoEasing.hpp>
+
 #include <PS2X_lib.h>
 
 #include <avr/sleep.h>
@@ -14,7 +16,7 @@
 #include "arm_servos.h"
 #include "joystick.h"
 #include "jc_dualshock.h"
-#include "arm_program.h"
+// #include "arm_program.h"
 #include "notifier.h"
 #include "serial_commander.h"
 
@@ -29,7 +31,7 @@ void(* reboot) (void) = 0;
 Notifier notifier(12);
 Joystick joystick(0);
 ArmServos arm;
-ArmProgram program;
+// ArmProgram program;
 SerialCommander serial_commander;
 const uint8_t Reset = 4;
 
@@ -49,7 +51,9 @@ void setup()
         notifier.stop_board();
     }
 
-    joystick.on_find_joystick_ = [&](volatile JoystickController *joystick_controller)
+    LOG_MESSAGE(F("Servo initialization completed..."));
+
+    joystick.on_find_joystick_ = [&](JoystickController *joystick_controller)
     {
         if (!joystick_controller)
         {
@@ -57,7 +61,7 @@ void setup()
             return;
         }
 
-        auto jt = joystick_controller->type();
+        const auto jt = joystick_controller->type();
         if (DualShockJC::controller_type != jt)
         {
             LOG_ERROR(F("Unsupported joystick type = "), jt);
@@ -66,13 +70,15 @@ void setup()
             notifier.stop_board();
         }
 
-        LOG_MESSAGE(F("Dualshock controller was found"));
+        LOG_MESSAGE(F("Dualshock controller was found."));
 
-        volatile DualShockJC &ds_joystick_controller = *static_cast<volatile DualShockJC*>(joystick_controller);
+        // Pointer to the controller implementation saved in josystick variable.
+        DualShockJC *ds_joystick_controller = static_cast<DualShockJC*>(joystick_controller);
 
-        ds_joystick_controller.on_pad_ = [&](volatile JoystickController *, uint16_t button_code, byte value)
+        ds_joystick_controller->on_pad_ = [&](JoystickController *, uint16_t button_code, byte value)
         {
             LOG_VALUE(F("Pad handler, code = "), button_code);
+
             switch (button_code)
             {
                 case PSB_PAD_UP:
@@ -90,7 +96,7 @@ void setup()
             }
         };
         
-        ds_joystick_controller.on_button_ = [&](volatile JoystickController *caller, uint16_t button_code, byte value)
+        ds_joystick_controller->on_button_ = [&](JoystickController *caller, uint16_t button_code, byte value)
         {
             LOG_VALUE(F("Button handler, code = "), button_code);
             switch (button_code)
@@ -105,23 +111,24 @@ void setup()
                 break;
                 case PSB_RED:
                     // Recording user actions and then save them in the EEPROM.
-                    program.start_recording(arm);
+                    // program.start_recording(arm);
                 break;
                 case PSB_PINK:
                     // Stop recording without saving or stop user program execution.
-                    program.stop_recording();
-                    program.stop();
+                    // program.stop_recording();
+                    // program.stop();
                 break;
                 case PSB_L1:
                 case PSB_L2:
-                    program.start(arm);
+                    // program.start(arm);
                 break;
             }
         };
    
-        ds_joystick_controller.on_left_stick_ = [&](volatile JoystickController *caller, int x_value, int y_value, bool clicked)
+        ds_joystick_controller->on_left_stick_ = [&](JoystickController *caller, int x_value, int y_value, bool clicked)
         {
-            LOG_MESSAGE(F("Left stick handler."));
+            LOG_VALUE(F("Left stick handler, clicked = %d"), clicked);
+
             if (clicked)
             {
                 LOG_MESSAGE(F("Left stick clicked."));
@@ -135,7 +142,7 @@ void setup()
             }
         };
     
-        ds_joystick_controller.on_right_stick_ = [&](volatile JoystickController *caller, int x_value, int y_value, bool clicked)
+        ds_joystick_controller->on_right_stick_ = [&](JoystickController *caller, int x_value, int y_value, bool clicked)
         {
             LOG_MESSAGE(F("Right stick handler."));
             if (clicked)
@@ -257,6 +264,12 @@ void setup()
             notifier.notify_short(4);
             notifier.stop_board();
         break;
+        case Joystick::jerr_controller_create_error:
+            LOG_ERROR(F("Joystick controller instance can't be created, error code = "), ji_result);
+            notifier.notify_long(2);
+            notifier.notify_short(5);
+            notifier.stop_board();
+        break;
         default:
             LOG_ERROR(F("Unknown joystick error = "), ji_result);
             notifier.notify_long(3);
@@ -274,7 +287,9 @@ void loop()
     {
         serial_commander.read_command();
         joystick.read_joystick();
-        program.step();
+        // program.step();
+        arm.rotate();
     }
-    delay(50);
+    
+    delay(5);
 }

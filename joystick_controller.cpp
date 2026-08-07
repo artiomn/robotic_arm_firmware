@@ -54,13 +54,13 @@ void JoystickController::check_control_buttons()
 }
 
 
-bool JoystickController::selected() const volatile
+bool JoystickController::selected() const
 {
     return !device_number_ || (device_number_ == selected_number_);
 }
 
 
-bool JoystickController::is_selection_in_process() const volatile
+bool JoystickController::is_selection_in_process() const
 {
     unsigned long ms = millis();
     return (ms > selection_waiting_ms) && ((ms - selection_time_start_) <= selection_waiting_ms);

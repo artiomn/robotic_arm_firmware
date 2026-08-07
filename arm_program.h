@@ -58,8 +58,8 @@ public:
 
 public:
     void clear();
-    void add_action(const ServoMotor &motor);
-    void add_action(const ServoMotor &motor, int angle);
+    void add_action(const ArmServos::ServoMotorType motor);
+    void add_action(const ArmServos::ServoMotorType motor, int angle);
 
 private:
     ProgramActionElement *program_;

@@ -2,7 +2,7 @@
 #include "jc_dualshock.h"
 
 
-void DualShockJC::process() volatile
+void DualShockJC::process()
 {
     // Read DualShock Controller and set large motor to spin at 'vibrate' speed.
     ps2_control_.read_gamepad(false, check_vibration_enabled() ? vibration_speed_ : 0);
@@ -21,7 +21,7 @@ void DualShockJC::process() volatile
 }
 
 
-void DualShockJC::vibrate(unsigned long ms, uint8_t vibration_speed, uint8_t vibration_count) volatile
+void DualShockJC::vibrate(unsigned long ms, uint8_t vibration_speed, uint8_t vibration_count)
 {
     vibration_start_time_ = millis();
     vibration_period_ = ms;
@@ -32,11 +32,11 @@ void DualShockJC::vibrate(unsigned long ms, uint8_t vibration_speed, uint8_t vib
 
 bool DualShockJC::check_vibration_enabled()
 {
-    volatile bool enable_vibration = false;
+    bool enable_vibration = false;
 
     if (vibration_count_)
     {
-        volatile unsigned long ms = millis();
+        unsigned long ms = millis();
         enable_vibration = ((vibration_start_time_ + vibration_period_) >= ms);
 
         if (!enable_vibration && ((vibration_start_time_ + 2 * vibration_period_) < ms))
