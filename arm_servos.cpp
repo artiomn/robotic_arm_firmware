@@ -165,7 +165,7 @@ void ArmServos::call_handler(const ServoMotorType servo, int angle)
 
 void ArmServos::write_servo(const ServoMotorType servo, int angle)
 {
-    servo_motors_[servo].write(angle);
+    servo_motors_[servo].init(angle);
     //call_handler(servo, angle);
 }
 

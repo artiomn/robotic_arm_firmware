@@ -16,6 +16,7 @@ public:
     unsigned min_angle() const { return min_angle_; }
     unsigned max_angle() const { return max_angle_; }
     unsigned pin() const { return pin_; }
+    void init(int value);
     void rotate_to(int angle);
     void rotate();
 

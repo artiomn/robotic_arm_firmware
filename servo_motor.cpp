@@ -18,6 +18,12 @@ bool ServoMotor::attach(unsigned int pin, unsigned int min_angle, unsigned int m
 }
 
 
+void ServoMotor::init(int value)
+{
+    rotate_to(value);
+}
+
+
 void ServoMotor::rotate_to(int angle)
 {
     dest_angle_ = angle;
@@ -31,16 +37,16 @@ void ServoMotor::rotate()
 
     const auto cur_angle = read();
 
-    if (dest_angle_ < cur_angle)
+    if (dest_angle_ > cur_angle)
     {
         const auto new_angle = cur_angle + dps_;
         write(min(new_angle, dest_angle_));
-        rotation_ = new_angle > dest_angle_;
+        rotation_ = new_angle < dest_angle_;
     }
-    else if (dest_angle_ > cur_angle)
+    else if (dest_angle_ < cur_angle)
     {
         const auto new_angle = cur_angle - dps_;
         write(max(new_angle, dest_angle_));
-        rotation_ = new_angle < dest_angle_;
+        rotation_ = new_angle > dest_angle_;
     }
 }
