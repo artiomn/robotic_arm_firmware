@@ -8,10 +8,10 @@ class DualShockJC : public JoystickController
 {
 public:
   static const unsigned int controller_type = 1;
-  const unsigned stick_min_value = 2;
 
 public:
-    DualShockJC(PS2X &control, unsigned int device_number) : JoystickController(control, controller_type, device_number)
+    DualShockJC(PS2X &control, unsigned int device_number, uint16_t stick_min_value = 2) :
+        JoystickController(control, controller_type, device_number), stick_min_value_(stick_min_value)
     {
         init();
     }
@@ -38,14 +38,27 @@ private:
         int y_value = zero_value_ - ps2_control_.Analog(y_const) + 1;
         bool clicked = ps2_control_.Button(btn_const);
 
-        if (selected() && on_stick && ((abs(x_value) > stick_min_value) || (abs(y_value) > stick_min_value) || clicked))
+        if (selected() && on_stick)
         {
             LOG_MESSAGE(msg);
             LOG_VALUE(F("X value: "), x_value);
             LOG_VALUE(F("Y value: "), y_value);
-            if (on_stick)
+
+            if (abs(x_value) <= stick_min_value_)
+            {
+                x_value = 0;
+            }
+
+            if (abs(y_value) <= stick_min_value_)
+            {
+                y_value = 0;
+            }
+
+            if (clicked || x_value || y_value)
             {
                 LOG_MESSAGE(F("Call on stick handler..."));
+                LOG_VALUE(F("X value: "), x_value);
+                LOG_VALUE(F("Y value: "), y_value);
                 on_stick(this, x_value, y_value, clicked);
                 LOG_MESSAGE(F("On stick handler called."));
             }
@@ -58,6 +71,8 @@ private:
     }
 
 private:
+    // Radius where joystick doesn't affect on sticks.
+    const unsigned int stick_min_value_;
     uint8_t vibration_speed_;
     unsigned long vibration_period_ = 0;
     unsigned long vibration_start_time_ = 0;
