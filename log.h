@@ -61,3 +61,12 @@ static const char _err_prefix[] = " [ERROR] ";
     Serial.print(message);        \
     Serial.println(value);        \
 }
+
+
+#if (defined(DEBUG))
+    #define LOG_DEBUG_MESSAGE(message) LOG_MESSAGE(message)
+    #define LOG_DEBUG_VALUE(...) LOG_VALUE(__VA_ARGS__)
+#else
+    #define LOG_DEBUG_MESSAGE(message)
+    #define LOG_DEBUG_VALUE(...)
+#endif

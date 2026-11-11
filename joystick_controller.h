@@ -89,7 +89,7 @@ private:
     template<const uint16_t button_id, const uint8_t analog_button_id, typename StringType>
     void log_and_call(const StringType *log_message, ButtonClickHandler on_button_handler)
     {
-        LOG_MESSAGE(log_message);
+        LOG_DEBUG_MESSAGE(log_message);
         if (on_button_handler)
         {
             on_button_handler(this, button_id, ps2_control_.Analog(analog_button_id));

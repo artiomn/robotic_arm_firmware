@@ -7,7 +7,7 @@
 
 void def_rot_handler(ArmServos *, const ArmServos::ServoMotorType, int)
 {
-    LOG_MESSAGE(F("Default rotate handler"));
+    LOG_DEBUG_MESSAGE(F("Default rotate handler"));
 }
 
 
@@ -158,7 +158,7 @@ void ArmServos::set_rotate_handler(RotateHandler handler)
 
 void ArmServos::call_handler(const ServoMotorType servo, int angle)
 {
-    LOG_VALUE(F("Rotation handler, angle = "), angle);
+    LOG_DEBUG_VALUE(F("Rotation handler, angle = "), angle);
     // on_rotate_(this, servo, angle);
 }
 

@@ -40,7 +40,7 @@ private:
 
         if (selected() && on_stick)
         {
-            LOG_MESSAGE(msg);
+            LOG_DEBUG_MESSAGE(msg);
             if (abs(x_value) <= stick_min_value_)
             {
                 x_value = 0;

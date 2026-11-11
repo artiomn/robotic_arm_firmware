@@ -47,7 +47,7 @@ bool DualShockJC::check_vibration_enabled()
                 enable_vibration = true;
             }
         }
-            LOG_VALUE("Vibration ms: ", ms);
+        LOG_DEBUG_VALUE(F("Vibration ms: "), ms);
     }
 
     return enable_vibration;

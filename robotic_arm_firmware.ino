@@ -77,7 +77,7 @@ void setup()
 
         ds_joystick_controller->on_pad_ = [&](JoystickController *, uint16_t button_code, byte value)
         {
-            LOG_VALUE(F("Pad handler, code = "), button_code);
+            LOG_DEBUG_VALUE(F("Pad handler, code = "), button_code);
 
             switch (button_code)
             {
@@ -98,7 +98,7 @@ void setup()
         
         ds_joystick_controller->on_button_ = [&](JoystickController *caller, uint16_t button_code, byte value)
         {
-            LOG_VALUE(F("Button handler, code = "), button_code);
+            LOG_DEBUG_VALUE(F("Button handler, code = "), button_code);
             switch (button_code)
             {
                 case PSB_GREEN:
@@ -127,11 +127,11 @@ void setup()
    
         ds_joystick_controller->on_left_stick_ = [&](JoystickController *caller, int x_value, int y_value, bool clicked)
         {
-            LOG_VALUE(F("Left stick handler, clicked = %d"), clicked);
+            LOG_DEBUG_VALUE(F("Left stick handler, clicked = %d"), clicked);
 
             if (clicked)
             {
-                LOG_MESSAGE(F("Left stick clicked."));
+                LOG_DEBUG_MESSAGE(F("Left stick clicked."));
                 arm.init_shoulder();
                 caller->vibrate(150);
             }
@@ -144,19 +144,15 @@ void setup()
     
         ds_joystick_controller->on_right_stick_ = [&](JoystickController *caller, int x_value, int y_value, bool clicked)
         {
-            LOG_MESSAGE(F("Right stick handler."));
+            LOG_DEBUG_VALUE(F("Right stick handler, clicked = %d"), clicked);
             if (clicked)
             {
-                LOG_MESSAGE(F("Right stick clicked."));
+                LOG_DEBUG_MESSAGE(F("Right stick clicked."));
                 arm.init_forearm();
                 caller->vibrate(150);
             }
             else
             {
-               //ArmServos::ServoData stat_x(arm.forearm_rotate_stats());
-               //ArmServos::ServoData stat_y(arm.forearm_lift_stats());
-               //map(x_value, -128, 128, stat_x.min_angle, stat_x.max_angle)
-               //map(y_value, -128, 128, stat_y.min_angle, stat_y.max_angle)
                 arm.rotate_forearm(x_value / 6);
                 arm.lift_forearm(y_value / 6);
             }

@@ -15,7 +15,7 @@ void JoystickController::check_control_buttons()
         {
             if (!is_selection_in_process())
            {
-                LOG_VALUE(F("Device selection started. My device number = "), device_number_);
+                LOG_DEBUG_VALUE(F("Device selection started. My device number = "), device_number_);
                 newly_selected_number_ = 0;
                 selection_time_start_ = millis();
                 delay(1);
@@ -24,7 +24,7 @@ void JoystickController::check_control_buttons()
             {
                 selected_number_ = newly_selected_number_;
                 selection_time_start_ = 0;
-                LOG_VALUE(F("Device selection finished. Selected device number = "), selected_number_);
+                LOG_DEBUG_VALUE(F("Device selection finished. Selected device number = "), selected_number_);
                 if (selected())
                 {
                     LOG_VALUE(F("It's me! I have been selected. Working..."));
@@ -43,11 +43,11 @@ void JoystickController::check_control_buttons()
         {
             selection_time_start_ = millis();
             ++newly_selected_number_;
-            LOG_VALUE(F("Newly selected number: "), newly_selected_number_);
+            LOG_DEBUG_VALUE(F("Newly selected number: "), newly_selected_number_);
         }
         else if (selected())
         {
-            LOG_VALUE(F("Select is being held."));
+            LOG_DEBUG_VALUE(F("Select is being held."));
             on_button_(this, PSB_SELECT, ps2_control_.Analog(PSB_SELECT));
         }
     }

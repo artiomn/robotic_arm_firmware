@@ -17,7 +17,7 @@ int Joystick::init_joystick(uint8_t clock_pin, uint8_t command_pin,
     // GamePad(clock, command, attention, data, Pressures?, Rumble?) 
     control_error_ = control_.config_gamepad(clock_pin, command_pin, attention_pin, data_pin, true, true);
 
-    LOG_VALUE(F("Controller initialization error: "), control_error_);
+    LOG_ERROR(F("Controller initialization error: "), control_error_);
 
     if ((control_error_ != jerr_success) && (control_error_ != Joystick::jerr_controller_refuse_pressures_mode)) return control_error_;
 
